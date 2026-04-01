@@ -452,7 +452,7 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
       <table class="guide">
         <thead><tr><th style="width:115px">หมวด</th><th>ตัวอย่างรายการที่กรอก</th><th style="width:120px">เอกสารแนบ</th></tr></thead>
         <tbody>
-          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทางไปกลับงาน LINE Bootcamp จาก เอกชัย 46 ไป สามย่าน</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทาง[ไป,ไปและกลับ]งาน [ชื่องาน] จาก [ชื่อสถานที่] ไป [ชื่อสถานที่]</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
           <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทางวางบิล บ.ABC (QT001) จาก ออฟฟิศ ไป เมืองทองธานี</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
           <tr><td><span class="cat-pill">ค่าน้ำมัน</span></td><td>ค่าน้ำมันเดินทางพบลูกค้า บ.XYZ งาน Project Kickoff (ดูใบคุม)</td><td><span class="note-pill">ใบคุมค่าน้ำมัน</span></td></tr>
           <tr><td><span class="cat-pill">ค่าทางด่วน</span></td><td>ค่าทางด่วนเดือน มี.ค. 2569 (ดูรายละเอียดใบคุม)</td><td><span class="note-pill">ใบคุมทางด่วน</span></td></tr>
@@ -710,7 +710,7 @@ function s1Add(){
   tr.innerHTML=`
     <td class="c-idx">${document.querySelectorAll('#s1-body tr').length+1}</td>
     <td><input type="date" oninput="s1Calc();checkOverdue()"></td>
-    <td><textarea rows="1" placeholder="เช่น ค่าเดินทางไปกลับงาน LINE Bootcamp จาก เอกชัย 46 ไป สามย่าน" oninput="ar(this);s1Calc()"></textarea></td>
+    <td><textarea rows="1" placeholder="ดูตัวอย่างข้อความได้ที่แทบ คู่มือ" oninput="ar(this);s1Calc()"></textarea></td>
     <td><select onchange="s1Calc()">${catOpts('ค่าเดินทาง')}</select></td>
     <td class="c-num"><input type="number" min="0" step="0.01" placeholder="0.00" oninput="s1Calc()"></td>
     <td><select onchange="s1TypeChange(${id},this)" style="font-size:12px;padding:5px 3px">
