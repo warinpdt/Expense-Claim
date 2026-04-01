@@ -198,7 +198,51 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
 </head>
 <body>
 
-<!-- ═══ SETTINGS PANEL ═══ -->
+<!-- ═══ PRINT TIP MODAL ═══ -->
+<div id="print-tip" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="background:var(--navy);color:#fff;padding:14px 20px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      ก่อนพิมพ์ — ปิด Header & Footer
+    </div>
+    <div style="padding:20px">
+      <p style="font-size:14px;color:var(--gray-700);margin-bottom:14px;line-height:1.7">
+        เพื่อไม่ให้มี URL และเวลาแสดงบนเอกสาร ให้ทำดังนี้ใน Chrome:
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">1</span>
+          <span>คลิก <b>"More settings"</b> (ตั้งค่าเพิ่มเติม) ในหน้าต่าง Print</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">2</span>
+          <span>ปิด <b>"Headers and footers"</b> (ส่วนหัวและส่วนท้าย)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">3</span>
+          <span>กด <b>"Print"</b> ได้เลย</span>
+        </div>
+      </div>
+      <div style="background:var(--navy-light);border-radius:8px;overflow:hidden;margin-bottom:16px">
+        <img src="https://i.imgur.com/dummy.png" style="display:none">
+        <div style="padding:10px 14px;font-size:12px;color:var(--navy-mid);display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          หลังปิด Headers and footers ครั้งแรก Chrome จะจำค่านี้ไว้ให้อัตโนมัติ
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <input type="checkbox" id="tip-no-show" style="width:16px;height:16px;cursor:pointer">
+        <label for="tip-no-show" style="font-size:13px;color:var(--gray-500);cursor:pointer">ไม่ต้องแสดงอีก</label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="cancelPrint()" style="flex:1;background:none;border:1.5px solid var(--gray-200);color:var(--gray-700);padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer">ยกเลิก</button>
+        <button onclick="confirmPrint(document.getElementById('tip-no-show').checked)" style="flex:2;background:var(--gold);color:#fff;border:none;padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">เข้าใจแล้ว — พิมพ์เลย</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel">
     <div class="settings-head">
@@ -611,7 +655,21 @@ function restoreAfterPrint(swapped){
 function doPrint(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
   document.getElementById('page-'+activeTab).classList.add('print-active');
+  // แสดง reminder ถ้ายังไม่เคยปิด
+  if(!localStorage.getItem('p4_print_tip_seen')){
+    document.getElementById('print-tip').style.display='flex';
+  } else {
+    window.print();
+  }
+}
+function confirmPrint(dontShow){
+  if(dontShow) localStorage.setItem('p4_print_tip_seen','1');
+  document.getElementById('print-tip').style.display='none';
   window.print();
+}
+function cancelPrint(){
+  document.getElementById('print-tip').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
 }
 
 /* beforeprint/afterprint ทำหน้าที่ swap เพียงที่เดียว
