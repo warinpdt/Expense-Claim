@@ -304,6 +304,14 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
 ═══════════════════════════════════════ -->
 <div class="page active" id="page-0">
 <div class="container">
+  <!-- autosave bar -->
+  <div id="s1-save-bar" class="no-print" style="display:none;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid var(--gray-200);border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+    <span style="color:var(--green);display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="s1-save-msg">บันทึกอัตโนมัติแล้ว</span>
+    </span>
+    <button onclick="s1ClearDraft()" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">เริ่มใหม่</button>
+  </div>
   <div id="s1-overdue-warn" class="alert warn no-print" style="display:none">
     <span class="alert-icon">⚠</span>
     <span id="s1-overdue-msg"></span>
@@ -760,20 +768,73 @@ function checkOverdue(){
 }
 
 /* ─────────────────────────────────────
+   AUTOSAVE — บันทึกข้อมูลใบสรุป
+   ทุกครั้งที่มีการเปลี่ยนแปลง
+───────────────────────────────────── */
+const SAVE_KEY = 'p4_s1_draft';
+
+function s1Save(){
+  const header = {
+    date : document.getElementById('s1-date')?.value || '',
+    name : document.getElementById('s1-name')?.value || '',
+    dept : document.getElementById('s1-dept')?.value || '',
+  };
+  const rows = [];
+  document.querySelectorAll('#s1-body tr').forEach(tr=>{
+    const date   = tr.querySelector('input[type=date]')?.value || '';
+    const detail = tr.querySelector('textarea')?.value || '';
+    const cat    = tr.querySelector('select')?.value || '';
+    const amount = tr.querySelectorAll('input[type=number]')[0]?.value || '';
+    const type   = tr.querySelectorAll('select')[1]?.value || 'novat';
+    rows.push({date, detail, cat, amount, type});
+  });
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({header, rows, ts: Date.now()})); }catch(e){}
+}
+
+function s1Restore(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const {header, rows} = JSON.parse(raw);
+    if(header.date) document.getElementById('s1-date').value = header.date;
+    if(header.name) document.getElementById('s1-name').value = header.name;
+    if(header.dept) document.getElementById('s1-dept').value = header.dept;
+    if(!rows || !rows.length) return false;
+    // ล้าง default rows แล้ว restore
+    document.getElementById('s1-body').innerHTML = '';
+    rows.forEach(r => s1AddRow(r.date, r.detail, r.cat, r.amount, r.type));
+    s1Calc(); checkOverdue();
+    return true;
+  }catch(e){ return false; }
+}
+
+function s1ClearDraft(){
+  if(!confirm('ล้างข้อมูลในใบสรุปและเริ่มใหม่?')) return;
+  localStorage.removeItem(SAVE_KEY);
+  document.getElementById('s1-body').innerHTML = '';
+  document.getElementById('s1-date').value = new Date().toISOString().split('T')[0];
+  s1Add(); s1Add(); s1Add();
+  s1Calc();
+}
+
+/* ─────────────────────────────────────
    PAGE 0 — ใบสรุป
 ───────────────────────────────────── */
-function s1Add(){
+/* s1AddRow รับ prefill สำหรับ restore, s1Add เป็น wrapper ไม่มี args */
+function s1AddRow(date, detail, cat, amount, type){
   const id=nid();
   const tr=document.createElement('tr'); tr.id='r'+id;
+  const selCat = cat || 'ค่าเดินทาง';
+  const selType = type || 'novat';
   tr.innerHTML=`
     <td class="c-idx">${document.querySelectorAll('#s1-body tr').length+1}</td>
-    <td><input type="date" oninput="s1Calc();checkOverdue()"></td>
-    <td><textarea rows="1" placeholder="ดูตัวอย่างข้อความได้ที่แทบ คู่มือ" oninput="ar(this);s1Calc()"></textarea></td>
-    <td><select onchange="s1Calc()">${catOpts('ค่าเดินทาง')}</select></td>
-    <td class="c-num"><input type="number" min="0" step="0.01" placeholder="0.00" oninput="s1Calc()"></td>
+    <td><input type="date" value="${date||''}" oninput="s1Calc();checkOverdue();s1Save()"></td>
+    <td><textarea rows="1" placeholder="ดูตัวอย่างข้อความได้ที่แทบ คู่มือ" oninput="ar(this);s1Calc();s1Save()">${detail||''}</textarea></td>
+    <td><select onchange="s1Calc();s1Save()">${catOpts(selCat)}</select></td>
+    <td class="c-num"><input type="number" min="0" step="0.01" placeholder="0.00" value="${amount||''}" oninput="s1Calc();s1Save()"></td>
     <td><select onchange="s1TypeChange(${id},this)" style="font-size:12px;padding:5px 3px">
-      <option value="novat" selected>ไม่มีใบกำกับ</option>
-      <option value="vat">มีใบกำกับ</option>
+      <option value="novat"${selType==='novat'?' selected':''}>ไม่มีใบกำกับ</option>
+      <option value="vat"${selType==='vat'?' selected':''}>มีใบกำกับ</option>
     </select></td>
     <td class="no-print" style="text-align:center;vertical-align:middle;padding:5px 3px">
       <button class="btn-rc" id="rcbtn-${id}" onclick="s1CreateRC(${id})" title="สร้างใบรับรองแทน RC จากรายการนี้">
@@ -781,13 +842,16 @@ function s1Add(){
         สร้าง RC
       </button>
     </td>
-    <td class="c-act no-print">${delIcon(id,'s1-body','s1Calc')}</td>`;
+    <td class="c-act no-print">${delIcon(id,'s1-body','()=>{s1Calc();s1Save()}')}</td>`;
   document.getElementById('s1-body').appendChild(tr);
+  // auto-resize textarea ถ้า prefill
+  const ta = tr.querySelector('textarea');
+  if(ta && detail) setTimeout(()=>ar(ta), 30);
   reIdx('s1-body'); s1Calc();
 }
+function s1Add(){ s1AddRow(); }
 function s1TypeChange(rowId, sel){
-  s1Calc();
-  // hide RC button if type is vat (มีใบกำกับ ไม่ต้องออก RC)
+  s1Calc(); s1Save();
   const btn = document.getElementById('rcbtn-'+rowId);
   if(btn) btn.style.opacity = sel.value==='vat' ? '0.3' : '1';
 }
@@ -1096,16 +1160,46 @@ function recCalc(){
   const today = now.toISOString().split('T')[0];
   const ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 
-  document.getElementById('s1-date').value = today;
   ['oil-month','toll-month','rec-month'].forEach(id=>{
     document.getElementById(id).value = ym;
   });
 
-  // init default rows
-  s1Add(); s1Add(); s1Add();
+  // restore draft หรือ init default
+  const restored = s1Restore();
+  if(!restored){
+    document.getElementById('s1-date').value = today;
+    s1Add(); s1Add(); s1Add();
+  } else {
+    // แสดง bar พร้อมเวลาที่บันทึก
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(raw){
+        const {ts} = JSON.parse(raw);
+        const d = new Date(ts);
+        const dstr = d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        document.getElementById('s1-save-msg').textContent = `โหลดข้อมูลที่บันทึกไว้ (${dstr})`;
+      }
+    }catch(e){}
+    document.getElementById('s1-save-bar').style.display = 'flex';
+  }
+
   oilAdd(); tollAdd(); recAdd();
 
-  // first-run: open settings if no name saved
+  // อัปเดต save bar ทุกครั้งที่ save
+  const _origSave = s1Save;
+  s1Save = function(){
+    _origSave();
+    const bar = document.getElementById('s1-save-bar');
+    const msg = document.getElementById('s1-save-msg');
+    bar.style.display = 'flex';
+    msg.textContent = 'บันทึกอัตโนมัติแล้ว ✓';
+  };
+
+  // save header fields เมื่อมีการแก้ไข
+  ['s1-date','s1-name','s1-dept'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input', s1Save);
+  });
+
   if(!cfg.name) setTimeout(openSettings, 600);
 })();
 </script>
