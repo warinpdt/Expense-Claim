@@ -1,1 +1,2282 @@
 
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ระบบเบิกค่าใช้จ่าย — P4 Digital Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!--
+╔══════════════════════════════════════════════════════════╗
+║   ระบบเบิกค่าใช้จ่ายเบ็ดเตล็ด — P4 Digital Group       ║
+║   Version 2.0                                            ║
+╠══════════════════════════════════════════════════════════╣
+║  วิธีตั้งค่าเบื้องต้น (ทำครั้งเดียว):                   ║
+║                                                          ║
+║  1. เปิดไฟล์นี้ด้วย Notepad / VS Code / TextEdit        ║
+║  2. หา Section "USER CONFIG" ด้านล่าง                    ║
+║  3. แก้ไขข้อมูลบริษัทและค่า default ให้ตรง              ║
+║  4. บันทึกไฟล์ → เปิดด้วย Chrome/Edge ได้เลย            ║
+║                                                          ║
+║  วิธีใช้งานประจำ:                                        ║
+║  - กรอกข้อมูล → กด "พิมพ์หน้านี้" ได้เลย               ║
+║  - ข้อมูลผู้ใช้จะจำไว้ใน browser อัตโนมัติ              ║
+╚══════════════════════════════════════════════════════════╝
+-->
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#00205b;--navy-mid:#0032a0;--navy-light:#d4dff0;--navy-dark:#00205b;
+  --gold:#7ad4ae;--gold-light:#e6f8f2;--gold-border:#7ad4ae;
+  --yellow:#f5f6f8;
+  --gray-50:#f8f9fb;--gray-100:#eef0f4;--gray-200:#dde1ea;--gray-300:#c8cdd8;
+  --gray-500:#7a8393;--gray-700:#3d4352;--gray-900:#1a1d26;
+  --green-bg:#e8f5e9;--green:#2e7d32;
+  --red-soft:#fff0f0;--red:#c0392b;
+  --orange-bg:#fff3e0;--orange:#e65100;
+  --blue-soft:#e8f4fd;--blue:#1a6fa8;
+  --r:10px;
+}
+body{font-family:'Sarabun',sans-serif;background:#edf1f7;color:var(--gray-900);font-size:15px;line-height:1.6}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--navy-dark);padding:0 20px;display:flex;align-items:stretch;justify-content:space-between;min-height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-name{color:#fff;font-size:16px;font-weight:700}
+.brand-sub{color:#93bce8;font-size:12px;font-weight:400}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.btn-print{background:#FFD187;color:#3d3d3a;border:none;padding:8px 18px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s}
+.btn-print:hover{background:#f5bc5a}
+.btn-settings{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+.btn-settings:hover{background:rgba(255,255,255,.18)}
+
+/* ── TABS ── */
+.tabs-bar{background:var(--navy);padding:0 20px;display:flex;align-items:flex-end;gap:2px;overflow-x:auto;position:sticky;top:52px;z-index:190}
+.tabs-bar::-webkit-scrollbar{height:3px}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.55);padding:10px 16px 9px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .2s}
+.tab-btn:hover{color:#fff;background:rgba(255,255,255,.07)}
+.tab-btn.active{color:#fff;border-bottom-color:#7ad4ae;background:rgba(255,255,255,.1)}
+.tab-num{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:10px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.tab-btn.active .tab-num{background:#7ad4ae;color:#00205b}
+
+/* ── PAGES ── */
+.page{display:none}.page.active{display:block}
+.container{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+
+/* ── CARD ── */
+.card{background:#fff;border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden}
+.card-head{background:var(--navy);color:#fff;padding:11px 18px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-head .dot{width:7px;height:7px;border-radius:50%;background:#7ad4ae;flex-shrink:0}
+.badge-sm{background:rgba(255,255,255,.15);font-size:11px;padding:2px 8px;border-radius:10px;margin-left:auto}
+.card-body{padding:16px 18px}
+
+/* ── FORM ── */
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.field-row.tri{grid-template-columns:1fr 1fr 1fr}
+.field-row.single{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px}
+.field input,.field select,.field textarea{border:1.5px solid var(--gray-200);border-radius:7px;padding:8px 11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--gray-900);background:var(--yellow);transition:border .2s}
+.field textarea{resize:vertical;min-height:64px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(36,87,160,.1)}
+.field input[readonly]{background:#f0f3f8;color:var(--gray-500)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table.et{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;min-width:700px}
+.et th{background:#3a61a9;color:#fff;padding:9px 7px;font-weight:600;font-size:11px;text-align:center;white-space:nowrap}
+.et td{padding:4px 4px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+.et tbody tr:hover td{background:#fafbfd}
+.et td input,.et td select,.et td textarea{width:100%;box-sizing:border-box;border:1.5px solid #e8eaf0;border-radius:5px;padding:5px 7px;font-family:'Sarabun',sans-serif;font-size:13px;background:var(--yellow);color:var(--gray-900);resize:none;overflow:hidden;transition:border .15s}
+.et td textarea{min-height:32px}
+.et td input:focus,.et td select:focus,.et td textarea:focus{outline:none;border-color:var(--navy-mid);background:#fff}
+.c-idx{width:26px;text-align:center;color:var(--gray-500);font-size:12px;padding-top:9px!important}
+.c-act{width:28px;text-align:center}
+.c-num input{text-align:right}
+.btn-del{background:none;border:none;cursor:pointer;color:var(--gray-300);padding:3px;border-radius:4px;line-height:1;transition:all .15s}
+.btn-del:hover{color:var(--red);background:var(--red-soft)}
+.btn-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:9px;background:none;border:1.5px dashed var(--navy-mid);color:var(--navy-mid);padding:8px 14px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:all .2s}
+.btn-add:hover{background:var(--navy-light)}
+.btn-rc{background:#e8edf8;border:1px solid #a8bcdf;color:#0032a0;padding:4px 8px;border-radius:5px;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:3px}
+.btn-rc:hover{background:#0032a0;color:#fff;border-color:#0032a0}
+.btn-rc.linked{background:#e6f8f2;border-color:#7ad4ae;color:#0e7a6e}
+.btn-rc.linked:hover{background:#7ad4ae;color:#00205b;border-color:#7ad4ae}
+.rc-linked-tag{font-size:10px;padding:2px 6px;border-radius:8px;background:#e6f8f2;color:#0032a0;border:1px solid #7ad4ae;white-space:nowrap}
+
+/* ── TOTALS ── */
+.totals-box{background:#EEF1FB;border-radius:10px;overflow:hidden;margin-top:11px;border:1px solid #CDD6F3}
+.tr-row{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;font-size:13.5px}
+.tr-row+.tr-row{border-top:none}
+.totals-divider{height:2px;background:#0032a0;margin:0}
+.tr-row.grand{padding:12px 16px;font-size:17px;font-weight:700;color:var(--navy)}
+.tr-label{color:var(--gray-700)}
+.tr-val{font-weight:600;text-align:right;color:var(--navy);min-width:120px}
+.tr-val.grand{font-size:19px;font-weight:700}
+.amt-words{background:#fff;border:1.5px solid #dde1ea;border-radius:0 0 8px 8px;padding:10px 16px;font-size:13px;color:var(--gray-700);margin:0}
+.amt-words b{color:var(--navy);font-weight:600}
+
+/* ── ALERT ── */
+.alert{display:flex;gap:9px;align-items:flex-start;padding:9px 13px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.alert.warn{background:var(--orange-bg);color:var(--orange);border:1px solid #ffcc80}
+.alert.info{background:var(--blue-soft);color:var(--blue);border:1px solid #90caf9}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.date-warn{font-size:11px;color:var(--orange);margin-top:2px;display:none}
+.date-warn.show{display:block}
+
+/* ── SIGNATURES ── */
+.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sig-box{text-align:center;padding:10px 6px}
+.sig-line{border-bottom:1px solid var(--gray-200);height:36px;margin-bottom:7px}
+.sig-lbl{font-size:12px;color:var(--gray-500)}
+.sig-date{font-size:11px;color:var(--gray-300);margin-top:2px}
+.note-bar{font-size:12px;color:var(--gray-500);margin-top:9px;padding:8px 2px}
+
+/* ── SETTINGS PANEL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-start;justify-content:center;padding-top:60px}
+.overlay.open{display:flex}
+.settings-panel{background:#fff;border-radius:12px;width:100%;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,.2);overflow:hidden;max-height:85vh;overflow-y:auto}
+.settings-head{background:var(--navy);color:#fff;padding:14px 20px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.settings-body{padding:20px}
+.settings-body .field{margin-bottom:12px}
+.btn-save{width:100%;background:var(--navy-mid);color:#fff;border:none;padding:11px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .2s}
+.btn-save:hover{background:var(--navy)}
+.btn-close-x{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:20px;line-height:1;padding:0}
+
+/* ── GUIDE ── */
+table.guide{width:100%;border-collapse:collapse;font-size:13px}
+.guide th{background:var(--navy);color:#fff;padding:8px 11px;font-weight:600;font-size:12px;text-align:left}
+.guide td{padding:8px 11px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+.guide tr:nth-child(even) td{background:var(--gray-50)}
+.cat-pill{display:inline-block;background:var(--navy-light);color:var(--navy-mid);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+.note-pill{display:inline-block;background:#fff3cd;color:#856404;font-size:11px;padding:2px 7px;border-radius:10px}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.rule-item{padding:12px 14px;border-radius:8px;border-left:4px solid var(--navy-mid);background:var(--gray-50)}
+.rule-item h4{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.rule-item p{font-size:12px;color:var(--gray-700);line-height:1.6}
+
+/* ═══════════════ PRINT ═══════════════ */
+@media print{
+  @page{size:A4 portrait;margin:13mm 12mm 18mm 12mm;
+    @bottom-right{
+      content:"หน้า " counter(page) " / " counter(pages);
+      font-family:'Sarabun',sans-serif;
+      font-size:8pt;color:#666;
+    }
+  }
+  @page rc-page{size:A4 portrait;margin:13mm 12mm 18mm 12mm;
+    @bottom-right{content:none}
+  }
+  @page no-pagenum{size:A4 portrait;margin:13mm 12mm 18mm 12mm;
+    @bottom-right{content:none}
+  }
+  #page-1.print-active{page:rc-page}
+  #page-2.print-active{page:no-pagenum}
+  #page-3.print-active{page:no-pagenum}
+  body{background:#fff;font-size:10pt;line-height:1.4;color:#000}
+  .topbar,.tabs-bar,.btn-add,.btn-del,.no-print,.overlay,.alert{display:none!important}
+  .page{display:none!important}
+  .page.print-active{display:block!important}
+  .container{padding:0;max-width:100%}
+
+  .card{box-shadow:none;border-radius:0;border:none;margin-bottom:6px}
+  /* card ที่มีตาราง → ตัดข้ามหน้าได้ แต่ละแถวห้ามตัด */
+  .card:has(.et){break-inside:auto;page-break-inside:auto}
+  /* sig-card (ลายเซ็น) → ห้ามตัดกลาง ถ้าพอดีอยู่หน้าเดิม ถ้าไม่พอขึ้นหน้าใหม่ทั้งก้อน */
+  .sig-card{break-inside:avoid;page-break-inside:avoid}
+  .card-head{break-after:avoid;page-break-after:avoid;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px 12px;font-size:10pt}
+  /* card-body ผูกติดกับ card-head ห้ามขึ้นหน้าโดยลำพัง */
+  .card-body{break-before:avoid;page-break-before:avoid}
+  .card-body{padding:7px 12px}
+  .field-row,.field-row.tri{gap:6px;margin-bottom:5px}
+  .field label{font-size:8.5pt;color:#555}
+
+  /* .pv คือ span ที่ JS inject แทน input/select/textarea */
+  .pv{font-size:10pt;line-height:1.4;display:block;white-space:pre-wrap;word-break:break-word}
+
+  /* table */
+  .et{font-size:9pt;width:100%;border-collapse:collapse}
+  .et th{padding:5px 6px;font-size:9pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .et td{padding:3px 5px;border-bottom:0.5px solid #ccc;vertical-align:top}
+  .et td .pv{font-size:9pt}
+  .et tbody tr{break-inside:avoid;background:transparent!important}
+  .et tbody td{background:transparent!important}
+
+  /* totals */
+  .totals-box{break-inside:avoid;page-break-inside:avoid;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    padding:0;border:0.5pt solid #bbc5e4;border-radius:4pt;overflow:visible}
+  .tr-row{padding:5pt 10pt;font-size:9.5pt}
+  .tr-row.grand{font-size:11.5pt;font-weight:700;padding:7pt 10pt}
+  .totals-divider{height:1.5pt!important;background:#0032a0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;margin:0}
+  .amt-words{break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact;
+    padding:5pt 10pt;font-size:9pt;border-radius:0;border:none;
+    border-top:0.5pt solid #dde1ea;margin:0}
+
+  /* invoice checkbox print */
+  input[type=checkbox]{display:none!important}
+  label:has(input[id^="inv-"]){display:flex!important;justify-content:center!important;pointer-events:none}
+  span[id^="inv-lbl-"]{font-size:9pt!important;font-weight:400!important;text-align:center!important;color:#000!important}
+
+  /* signatures */
+  .sig-grid{break-inside:avoid;page-break-inside:avoid}
+  .sig-box{padding:8px 4px}
+  .sig-line{height:28px;margin-bottom:5px;border-bottom:1px solid #999}
+  .sig-lbl,.sig-date{font-size:9pt}
+  .note-bar{background:transparent;break-inside:avoid;font-size:8.5pt;padding:5px 2px;margin-top:6px}
+  /* RC แต่ละฉบับแยกหน้า */
+  #rc-container > div + div { break-before: page; }
+  /* oil แต่ละใบแยกหน้า */
+  #oil-container > div + div { break-before: page; }
+  #toll-container > div + div { break-before: page; }
+  /* ซ่อนเส้นตัด */
+  .cut-line { display: none !important; }
+
+  /* ปลดล็อค overflow ทุกชั้นเพื่อไม่ให้ clip ข้อความ */
+  .tbl-wrap{overflow:visible!important}
+  .et{overflow:visible!important;min-width:0!important}
+  /* ใบสรุป print column layout */
+  #s1-header-card>div:first-child { page-break-after: avoid }
+  .et td .pv { font-size:8.5pt!important; line-height:1.35 }
+  /* print: auto layout, กำหนด width เป็น % ของหน้ากระดาษ */
+  #page-0 .et { table-layout:fixed!important; width:100%!important }
+  #page-0 .et th:nth-child(1){width:3%}    /* # */
+  #page-0 .et th:nth-child(2){width:9%}    /* วันที่ */
+  #page-0 .et th:nth-child(3){width:25%}   /* รายการ */
+  #page-0 .et th:nth-child(4){width:5%}    /* หมวด */
+  #page-0 .et th:nth-child(5){width:8%}    /* จำนวนเงิน */
+  #page-0 .et th:nth-child(6){width:5%}    /* ใบกำกับ */
+  #page-0 .et th:nth-child(7){width:45%}   /* หมายเหตุ */
+  #page-0 .et th:nth-child(8),
+  #page-0 .et th:nth-child(9){width:0;padding:0;overflow:hidden} /* RC+del hidden */
+  /* force wrap ทุก cell */
+  #page-0 .et td .pv{
+    white-space:pre-wrap!important;
+    word-break:break-all!important;
+    overflow-wrap:anywhere!important;
+    overflow:visible!important;
+    display:block;width:100%
+  }
+  /* หมวด wrap เหมือนกัน */
+  #page-0 .et td:nth-child(4) .pv{word-break:break-all!important}
+  .et th { font-size:8pt!important; padding:4px 5px!important }
+  .et td { padding:3px 4px!important;overflow:visible!important;word-break:break-all }
+
+  .card-head-logo{height:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+/* logo outside print */
+.card-head-logo{height:26px;width:auto;object-fit:contain;margin-left:auto;display:block;opacity:.9}
+/* หมายเหตุ cell wrap */
+.et td input[type=text]{white-space:normal;word-break:break-word}
+/* ปรับ select ประเภทให้กระชับ */
+.et td select{min-width:0}
+#s1-header-card .field input[readonly]{color:var(--gray-700);background:#f8f9fb}
+@media print{
+  #s1-header-card>div:first-child{padding:10px 14px 8px;border-bottom:1px solid #ddd}
+  #s1-header-card>div:first-child img{height:48px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #s1-header-card>div:first-child>div>div:first-child{font-size:16pt}
+  #s1-header-card>div:first-child>div>div:last-child{display:none}
+}
+
+/* ════ Tab 4 — Teal overrides ════ */
+#toll-container .et th                         { background:#4a9b8e }
+#toll-container .card-head                     { background:#0e7a6e }
+#toll-container .totals-box                    { background:#e4f5f3;border-color:#aadcd6 }
+#toll-container .tr-row.grand                  { color:#085f55 }
+#toll-container .tr-val                        { color:#085f55 }
+#toll-container .totals-divider                { background:#0e7a6e!important }
+#toll-container .btn-add                       { border-color:#0e7a6e;color:#0e7a6e }
+#toll-container .btn-add:hover                 { background:#e4f5f3 }
+#toll-container .dot                           { background:#7ad4ae }
+</style>
+</head>
+<body>
+
+<!-- ═══ PRINT TIP MODAL ═══ -->
+<div id="print-tip" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="background:var(--navy);color:#fff;padding:14px 20px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      ก่อนพิมพ์ — ปิด Header & Footer
+    </div>
+    <div style="padding:20px">
+      <p style="font-size:14px;color:var(--gray-700);margin-bottom:14px;line-height:1.7">
+        เพื่อไม่ให้มี URL และเวลาแสดงบนเอกสาร ให้ทำดังนี้ใน Chrome:
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">1</span>
+          <span>คลิก <b>"More settings"</b> (ตั้งค่าเพิ่มเติม) ในหน้าต่าง Print</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">2</span>
+          <span>ปิด <b>"Headers and footers"</b> (ส่วนหัวและส่วนท้าย)</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;font-size:13px">
+          <span style="background:var(--navy);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">3</span>
+          <span>กด <b>"Print"</b> ได้เลย</span>
+        </div>
+      </div>
+      <div style="background:var(--navy-light);border-radius:8px;overflow:hidden;margin-bottom:16px">
+        <img src="https://i.imgur.com/dummy.png" style="display:none">
+        <div style="padding:10px 14px;font-size:12px;color:var(--navy-mid);display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          หลังปิด Headers and footers ครั้งแรก Chrome จะจำค่านี้ไว้ให้อัตโนมัติ
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <input type="checkbox" id="tip-no-show" style="width:16px;height:16px;cursor:pointer">
+        <label for="tip-no-show" style="font-size:13px;color:var(--gray-500);cursor:pointer">ไม่ต้องแสดงอีก</label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="cancelPrint()" style="flex:1;background:none;border:1.5px solid var(--gray-200);color:var(--gray-700);padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer">ยกเลิก</button>
+        <button onclick="confirmPrint(document.getElementById('tip-no-show').checked)" style="flex:2;background:var(--gold);color:#fff;border:none;padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">เข้าใจแล้ว — พิมพ์เลย</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-head">
+      <span>ตั้งค่าข้อมูลผู้ใช้</span>
+      <button class="btn-close-x" onclick="closeSettings()">×</button>
+    </div>
+    <div class="settings-body">
+      <div class="alert info no-print" style="margin-bottom:14px">
+        <span class="alert-icon">ℹ</span>
+        <span>กรอกครั้งเดียว — ระบบจะจำข้อมูลไว้ใน browser นี้ และใส่ให้อัตโนมัติทุกครั้ง</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">ข้อมูลบริษัท</div>
+      <div class="field"><label>ชื่อบริษัท</label><input type="text" id="cfg-company" placeholder="บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px">ข้อมูลส่วนตัว</div>
+      <div class="field"><label>ชื่อ-นามสกุล</label><input type="text" id="cfg-name" placeholder="ชื่อ สกุล"></div>
+      <div class="field-row">
+        <div class="field"><label>ตำแหน่ง</label><input type="text" id="cfg-pos" placeholder="Ads planner"></div>
+        <div class="field"><label>แผนก</label><input type="text" id="cfg-dept" placeholder="Digital Marketing"></div>
+      </div>
+      <div class="field"><label>เลขบัตรประชาชน</label><input type="text" inputmode="numeric" id="cfg-pid" maxlength="17" placeholder="x-xxxx-xxxxx-xx-x" oninput="pidInput(this)"></div>
+      <div class="field"><label>ที่อยู่</label><input type="text" id="cfg-addr" placeholder="บ้านเลขที่ ซอย แขวง เขต จังหวัด"></div>
+      <button class="btn-save" onclick="saveSettings()">บันทึกข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <div class="brand">
+    <div>
+      <div class="brand-name" id="topbar-company">P4 Digital Group</div>
+      <div class="brand-sub">ระบบเบิกค่าใช้จ่ายเบ็ดเตล็ด</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-settings no-print" onclick="openSettings()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      ตั้งค่าผู้ใช้
+    </button>
+    <button class="btn-print" onclick="doPrint()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      พิมพ์หน้านี้
+    </button>
+  </div>
+</div>
+
+<!-- ═══ TABS ═══ -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showTab(0)" data-tab="0"><span class="tab-num">1</span>ใบสรุป</button>
+  <button class="tab-btn" onclick="showTab(1)" data-tab="1"><span class="tab-num">2</span>ใบรับรองแทน RC</button>
+  <button class="tab-btn" onclick="showTab(2)" data-tab="2"><span class="tab-num">3</span>ใบคุมเงินสดย่อย (มี VAT)</button>
+  <button class="tab-btn" onclick="showTab(3)" data-tab="3"><span class="tab-num">4</span>ใบคุมเงินสดย่อย</button>
+  <button class="tab-btn" onclick="showTab(5)" data-tab="5"><span class="tab-num">?</span>คู่มือ</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 0 : ใบสรุปค่าใช้จ่าย
+═══════════════════════════════════════ -->
+<div class="page active" id="page-0">
+<div class="container">
+  <!-- autosave bar -->
+  <div id="s1-save-bar" class="no-print" style="display:none;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid var(--gray-200);border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+    <span style="color:var(--green);display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="s1-save-msg">บันทึกอัตโนมัติแล้ว</span>
+    </span>
+    <button onclick="s1ClearDraft()" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">เริ่มใหม่</button>
+  </div>
+  <div id="s1-overdue-warn" class="alert warn no-print" style="display:none">
+    <span class="alert-icon">⚠</span>
+    <span id="s1-overdue-msg"></span>
+  </div>
+  <div class="card" id="s1-header-card">
+    <!-- header: logo ซ้าย + ชื่อฟอร์ม ขวา -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--gray-100)">
+      <img id="s1-logo-img" src="" alt="P4D" style="height:64px;width:auto;object-fit:contain">
+      <div style="text-align:right">
+        <div style="font-size:22px;font-weight:700;color:var(--navy);line-height:1.2">ใบสรุปค่าใช้จ่ายเบ็ดเตล็ด</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:2px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field-row">
+        <div class="field"><label>บริษัท</label><input type="text" id="s1-company" readonly></div>
+        <div class="field"><label>วันที่ขอเบิก</label><input type="date" id="s1-date" oninput="checkOverdue()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ชื่อผู้เบิก</label><input type="text" id="s1-name" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="field"><label>แผนก / ตำแหน่ง</label><input type="text" id="s1-dept" placeholder="เช่น Technology / Data Analyst"></div>
+      </div>
+      <div style="font-size:14px;color:var(--gray-700);padding:8px 2px 2px">ขออนุมัติเบิกเงินค่าใช้จ่ายเบ็ดเตล็ด ที่สำรองจ่ายไปในกิจการของบริษัทฯ ดังนี้</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div>รายการค่าใช้จ่าย</div>
+    <div class="card-body">
+      <div class="tbl-wrap">
+        <table class="et">
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th style="width:96px">วันที่</th>
+            <th style="width:26%">รายการ</th>
+            <th style="width:100px">หมวด</th>
+            <th style="width:88px">จำนวนเงิน (฿)</th>
+            <th style="width:58px">ใบกำกับ</th>
+            <th style="width:22%">หมายเหตุ</th>
+            <th style="width:68px" class="no-print">RC</th>
+            <th style="width:28px" class="no-print c-act"></th>
+            <th style="width:28px" class="c-act no-print"></th>
+          </tr></thead>
+          <tbody id="s1-body"></tbody>
+        </table>
+      </div>
+      <button class="btn-add no-print" onclick="s1Add()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่มรายการ
+      </button>
+      <div class="totals-box">
+        <div class="tr-row"><span class="tr-label">มีใบกำกับภาษี</span><span class="tr-val" id="s1-sv">0.00 บาท</span></div>
+        <div class="tr-row"><span class="tr-label">ไม่มีใบกำกับภาษี</span><span class="tr-val" id="s1-sn">0.00 บาท</span></div>
+        <div class="totals-divider"></div>
+        <div class="tr-row grand"><span>ยอดรวมทั้งสิ้น</span><span class="tr-val grand" id="s1-st">0.00 บาท</span></div>
+        <div class="amt-words">ตัวอักษร: <b id="s1-atxt">ศูนย์บาทถ้วน</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="card sig-card">
+    <div class="card-head"><div class="dot"></div>ลายเซ็นอนุมัติ</div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px">
+        <div style="text-align:center;padding:8px 4px">
+          <div style="border-bottom:1px solid var(--gray-300);height:38px;margin-bottom:6px"></div>
+          <div style="font-size:13px;color:var(--gray-700);font-weight:500">ผู้เบิก</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;border-bottom:1px solid var(--gray-200);padding-bottom:3px">วันที่ ........../........../..............</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px">
+          <div style="border-bottom:1px solid var(--gray-300);height:38px;margin-bottom:6px"></div>
+          <div style="font-size:13px;color:var(--gray-700);font-weight:500">หัวหน้างาน</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;border-bottom:1px solid var(--gray-200);padding-bottom:3px">วันที่ ........../........../..............</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px">
+          <div style="border-bottom:1px solid var(--gray-300);height:38px;margin-bottom:6px"></div>
+          <div style="font-size:13px;color:var(--gray-700);font-weight:500">บัญชี/การเงิน</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;border-bottom:1px solid var(--gray-200);padding-bottom:3px">วันที่ ........../........../..............</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px">
+          <div style="border-bottom:1px solid var(--gray-300);height:38px;margin-bottom:6px"></div>
+          <div style="font-size:13px;color:var(--gray-700);font-weight:500">กรรมการผู้จัดการ</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;border-bottom:1px solid var(--gray-200);padding-bottom:3px">วันที่ ........../........../..............</div>
+        </div>
+      </div>
+      <div class="note-bar">หมายเหตุ — ค่าใช้จ่ายทุกประเภทสามารถเบิกย้อนหลังได้ไม่เกิน 1 เดือน</div>
+    </div>
+  </div>
+
+      <div class="no-print" style="margin-top:14px">
+  <div class="card">
+    <div class="card-head" style="cursor:pointer;user-select:none;background:#5097F5" onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none'">
+      <div class="dot" style="background:#FFD468"></div>ตัวอย่างรายการ
+      <span style="margin-left:auto;font-size:11px;font-weight:400;opacity:.7">คลิกเพื่อขยาย/ย่อ</span>
+    </div>
+    <div style="display:none">
+    <div class="card-body">
+      <table class="guide">
+        <thead><tr><th style="width:115px">หมวด</th><th>ตัวอย่างรายการที่กรอก</th><th style="width:120px">เอกสารแนบ</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทาง[ไป,ไปและกลับ]งาน [ชื่องาน] จาก [ชื่อสถานที่] ไป [ชื่อสถานที่]</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทางวางบิล บ.ABC (QT001) จาก ออฟฟิศ ไป เมืองทองธานี</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าน้ำมัน</span></td><td>ค่าน้ำมันเดินทางพบลูกค้า บ.XYZ งาน Project Kickoff (ดูใบคุม)</td><td><span class="note-pill">ใบคุมค่าน้ำมัน</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าทางด่วน</span></td><td>ค่าทางด่วนเดือน มี.ค. 2569 (ดูรายละเอียดใบคุม)</td><td><span class="note-pill">ใบคุมทางด่วน</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าอาหาร</span></td><td>ค่าอาหารเลี้ยงรับรองลูกค้า บ.ABC งาน Digital Summit จำนวน 5 คน</td><td><span class="note-pill">ใบกำกับภาษี</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าที่พัก</span></td><td>ค่าที่พักงาน Training เชียงใหม่ วันที่ 20-21 มี.ค. 2569</td><td><span class="note-pill">ใบกำกับภาษี</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าส่งพัสดุ</span></td><td>ค่าส่งเอกสาร Contract บ.ABC ทางไปรษณีย์ EMS</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">อื่นๆ</span></td><td>ระบุชื่อตามใบกำกับภาษี / ใบเสร็จรับเงิน / บิลเงินสด</td><td><span class="note-pill">ใบเสร็จ</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAGE 1 : ใบรับรองแทน RC
+     (dynamic — เพิ่ม/ลบใบได้)
+═══════════════════════════════════════ -->
+<div class="page" id="page-1">
+<div class="container">
+  <div class="no-print" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid var(--gray-200);border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+    <span style="color:var(--blue);display:flex;align-items:center;gap:6px">
+      <span class="alert-icon">ℹ</span>
+      <span>ออก <b>1 ใบ / 1 รายการ</b> — กดปุ่ม "+ เพิ่มใบ RC" เพื่อเพิ่ม ไม่ต้อง Copy Sheet</span>
+    </span>
+    <button onclick="rcClearAll()" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">ล้างทั้งหมด</button>
+  </div>
+  <div id="rc-container"></div>
+  <button class="btn-add no-print" style="max-width:1100px;margin:0 auto;display:flex" onclick="rcAddForm()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ เพิ่มใบ RC
+  </button>
+</div>
+</div>
+
+<!-- PAGE 2-4 : ใบคุมต่างๆ -->
+<div class="page" id="page-2"><div class="container">
+  <!-- oil autosave bar -->
+  <div id="oil-save-bar" class="no-print" style="display:none;align-items:center;justify-content:space-between;background:#F5EEF9;border:0.5px solid #C4A3D4;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+    <span style="color:#704C91;display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#704C91" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="oil-save-msg" style="color:#52336B">บันทึกอัตโนมัติแล้ว</span>
+    </span>
+    <button onclick="oilClearDraft()" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">เริ่มใหม่</button>
+  </div>
+  <div id="oil-container"></div>
+  <button class="btn-add no-print" style="max-width:1100px;margin:0 auto;display:flex" onclick="oilAddForm()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ เพิ่มใบใหม่
+  </button>
+</div></div>
+
+<div class="page" id="page-3"><div class="container">
+  <!-- toll autosave bar -->
+  <div id="toll-save-bar" class="no-print" style="display:none;align-items:center;justify-content:space-between;background:#e6f4f2;border:0.5px solid #a7d9d5;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+    <span style="color:#704C91;display:flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="toll-save-msg" style="color:#0e7a6e">บันทึกอัตโนมัติแล้ว</span>
+    </span>
+    <button onclick="tollClearDraft()" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">เริ่มใหม่</button>
+  </div>
+  <div id="toll-container"></div>
+  <button class="btn-add no-print" style="max-width:1100px;margin:0 auto;display:flex" onclick="tollAddForm()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>+ เพิ่มใบใหม่
+  </button>
+</div></div>
+
+
+<!-- ═══ PAGE 5 : คู่มือ ═══ -->
+<div class="page" id="page-5"><div class="container">
+  <div class="card">
+    <div class="card-head"><div class="dot"></div>ขั้นตอนการใช้งาน</div>
+    <div class="card-body" style="padding:24px 20px">
+
+      <!-- ── SETUP STEP ── -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#00205b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">0</div>
+        <div style="flex:1;background:#eef1fb;border-left:4px solid #0032a0;border-radius:0 8px 8px 0;padding:11px 16px">
+          <div style="font-size:13px;font-weight:700;color:#00205b;margin-bottom:3px">ครั้งแรก — ตั้งค่าผู้ใช้</div>
+          <div style="font-size:12.5px;color:var(--gray-700)">กดปุ่ม ⚙ <b>ตั้งค่าผู้ใช้</b> มุมขวาบน → กรอกชื่อ เลขบัตร ที่อยู่ ตำแหน่ง <b>ครั้งเดียว</b> ระบบจำไว้ให้ตลอด</div>
+        </div>
+      </div>
+
+      <!-- ── MAIN FLOW ── -->
+      <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Flow การเบิกค่าใช้จ่ายแต่ละเดือน</div>
+
+      <!-- เคสที่ 1 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:16px 18px;margin-bottom:14px;border:1px solid var(--gray-200)">
+        <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:12px;letter-spacing:.5px">● เคสที่ 1 — ค่าใช้จ่ายทั่วไป (มีใบเสร็จ)</div>
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:110px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #a8abdf;text-align:center">
+            <div style="font-size:20px">🧾</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">ได้ใบเสร็จ</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">บิล / ใบกำกับภาษี</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:130px;padding:10px 14px;background:#eef1fb;border-radius:8px;border:1px solid #a8abdf;text-align:center">
+            <div style="font-size:20px">① </div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">ลงใบสรุป</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">ติ๊ก ✓ มีใบกำกับ</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:120px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--gray-200);text-align:center">
+            <div style="font-size:20px">🖨️</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">พิมพ์ส่ง</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">Tab ① + แนบใบเสร็จ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- เคสที่ 2 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:16px 18px;margin-bottom:14px;border:1px solid var(--gray-200)">
+        <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:12px;letter-spacing:.5px">● เคสที่ 2 — ไม่มีใบเสร็จ (Grab, เดินทาง ฯลฯ)</div>
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:110px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #a8abdf;text-align:center">
+            <div style="font-size:20px">🚗</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">จ่ายไปแล้ว</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">ไม่มีใบเสร็จ</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:130px;padding:10px 14px;background:#eef1fb;border-radius:8px;border:1px solid #a8abdf;text-align:center">
+            <div style="font-size:20px">①</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">ลงใบสรุป</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">ไม่ติ๊ก ใบกำกับ</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:130px;padding:10px 14px;background:#eef1fb;border-radius:8px;border:1px solid #a8abdf;text-align:center">
+            <div style="font-size:20px">②</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">กด "สร้าง RC"</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">ข้อมูลถ่ายโอนอัตโนมัติ</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:120px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--gray-200);text-align:center">
+            <div style="font-size:20px">🖨️</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">พิมพ์ส่ง</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">Tab ① + Tab ②</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- เคสที่ 3 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:16px 18px;margin-bottom:20px;border:1px solid var(--gray-200)">
+        <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:12px;letter-spacing:.5px">● เคสที่ 3 — ค่าน้ำมัน / ทางด่วน (หลายรายการ)</div>
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:130px;padding:10px 14px;background:#F5EEF9;border-radius:8px;border:1px solid #C4A3D4;text-align:center">
+            <div style="font-size:20px">③ หรือ ④</div>
+            <div style="font-size:12px;font-weight:700;color:#52336B">กรอกใบคุม</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">ทุกรายการทั้งเดือน</div>
+          </div>
+          <div style="color:#704C91;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:150px;padding:10px 14px;background:#F5EEF9;border-radius:8px;border:1px solid #C4A3D4;text-align:center">
+            <div style="font-size:20px">↑</div>
+            <div style="font-size:12px;font-weight:700;color:#52336B">ส่งยอดสรุปไป Tab ①</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">1 บรรทัดในใบสรุป</div>
+          </div>
+          <div style="color:#0032a0;font-size:20px;padding:0 8px">→</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:120px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--gray-200);text-align:center">
+            <div style="font-size:20px">🖨️</div>
+            <div style="font-size:12px;font-weight:700;color:#00205b">พิมพ์ส่ง</div>
+            <div style="font-size:10.5px;color:var(--gray-500)">Tab ① + Tab ③/④</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:11px 13px">
+          <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">⏱ กำหนดส่ง</div>
+          <div style="font-size:12px;color:var(--gray-700)">เบิกย้อนหลังได้ <b>ไม่เกิน 1 เดือน</b> ระบบแจ้งเตือนอัตโนมัติ</div>
+        </div>
+        <div style="background:#e6f4f2;border:1px solid #a7d9d5;border-radius:8px;padding:11px 13px">
+          <div style="font-size:12px;font-weight:700;color:#0e7a6e;margin-bottom:4px">💾 Auto-save</div>
+          <div style="font-size:12px;color:var(--gray-700)">ข้อมูลบันทึกอัตโนมัติ refresh แล้ว <b>ข้อมูลยังอยู่</b></div>
+        </div>
+        <div style="background:#f0f4fa;border:1px solid #d4dff0;border-radius:8px;padding:11px 13px">
+          <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:4px">🖨 การพิมพ์</div>
+          <div style="font-size:12px;color:var(--gray-700)">เลือก Tab → กด "พิมพ์หน้านี้" → <b>A4 พอดี</b> ไม่ต้องปรับ margin</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="dot"></div>ตัวอย่างรายการ</div>
+    <div class="card-body">
+      <table class="guide">
+        <thead><tr><th style="width:115px">หมวด</th><th>ตัวอย่างรายการที่กรอก</th><th style="width:120px">เอกสารแนบ</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทาง[ไป,ไปและกลับ]งาน [ชื่องาน] จาก [ชื่อสถานที่] ไป [ชื่อสถานที่]</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าเดินทาง</span></td><td>ค่าเดินทางวางบิล บ.ABC (QT001) จาก ออฟฟิศ ไป เมืองทองธานี</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าน้ำมัน</span></td><td>ค่าน้ำมันเดินทางพบลูกค้า บ.XYZ งาน Project Kickoff (ดูใบคุม)</td><td><span class="note-pill">ใบคุมค่าน้ำมัน</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าทางด่วน</span></td><td>ค่าทางด่วนเดือน มี.ค. 2569 (ดูรายละเอียดใบคุม)</td><td><span class="note-pill">ใบคุมทางด่วน</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าอาหาร</span></td><td>ค่าอาหารเลี้ยงรับรองลูกค้า บ.ABC งาน Digital Summit จำนวน 5 คน</td><td><span class="note-pill">ใบกำกับภาษี</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าที่พัก</span></td><td>ค่าที่พักงาน Training เชียงใหม่ วันที่ 20-21 มี.ค. 2569</td><td><span class="note-pill">ใบกำกับภาษี</span></td></tr>
+          <tr><td><span class="cat-pill">ค่าส่งพัสดุ</span></td><td>ค่าส่งเอกสาร Contract บ.ABC ทางไปรษณีย์ EMS</td><td><span class="note-pill">ใบรับรองแทน RC</span></td></tr>
+          <tr><td><span class="cat-pill">อื่นๆ</span></td><td>ระบุชื่อตามใบกำกับภาษี / ใบเสร็จรับเงิน / บิลเงินสด</td><td><span class="note-pill">ใบเสร็จ</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div></div>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+
+/* ─────────────────────────────────────
+   USER CONFIG  ← แก้ค่าเริ่มต้นตรงนี้
+   (หรือกด "ตั้งค่าผู้ใช้" ใน browser)
+───────────────────────────────────── */
+const DEFAULT_CONFIG = {
+  company : 'บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด',
+  name    : '',   // ← ใส่ชื่อ-นามสกุล
+  pos     : '',   // ← ตำแหน่ง
+  dept    : '',   // ← แผนก
+  pid     : '',   // ← เลขบัตรประชาชน
+  addr    : '',   // ← ที่อยู่
+};
+
+const LOGO_B64 = "data:image/png;base64,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";
+
+
+/* ─────────────────────────────────────
+   CATEGORIES
+───────────────────────────────────── */
+const CATS = [
+  'ค่าเดินทาง',    // ใช้บ่อยสุด — Grab, taxi, รถสาธารณะ
+  'ค่าน้ำมัน',     // บันทึกใบคุม ③
+  'ค่าทางด่วน',    // บันทึกใบคุม ④
+  'ค่าอาหาร',      // เพิ่มจากตัวอย่างรายการ
+  'ค่าที่พัก',
+  'ค่ารับรอง',
+  'ค่าส่งพัสดุ',
+  'ค่าวัสดุ/อุปกรณ์',
+  'ค่าโทรศัพท์',
+  'ค่าอบรม/สัมมนา',
+  'ค่าโฆษณา',
+  'สวัสดิการอื่นๆ',
+  'อื่นๆ',
+];
+
+/* ─────────────────────────────────────
+   STATE
+───────────────────────────────────── */
+let rid = 0, rcCount = 0, activeTab = 0;
+let cfg = {};
+
+/* ─────────────────────────────────────
+   SETTINGS
+───────────────────────────────────── */
+function loadConfig(){
+  const saved = localStorage.getItem('p4_expense_cfg');
+  cfg = saved ? JSON.parse(saved) : {...DEFAULT_CONFIG};
+  applyConfig();
+}
+function applyConfig(force){
+  const co = cfg.company || DEFAULT_CONFIG.company;
+  document.getElementById('topbar-company').textContent = co.replace('บริษัท ','').replace(' จำกัด','');
+  ['s1-company'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = co;
+  });
+  // force=true (after explicit save) → always overwrite
+  // force=false (on load) → only fill if empty
+  const nm = document.getElementById('s1-name');
+  if(nm && (force || !nm.value)) nm.value = cfg.name || '';
+  const dp = document.getElementById('s1-dept');
+  if(dp && (force || !dp.value)){
+    const parts = [cfg.pos, cfg.dept].filter(Boolean);
+    dp.value = parts.join(' / ');
+  }
+}
+function openSettings(){
+  const saved = localStorage.getItem('p4_expense_cfg');
+  const c = saved ? JSON.parse(saved) : {...DEFAULT_CONFIG};
+  document.getElementById('cfg-company').value = c.company || DEFAULT_CONFIG.company;
+  document.getElementById('cfg-name').value = c.name || '';
+  document.getElementById('cfg-pos').value  = c.pos  || '';
+  document.getElementById('cfg-dept').value = c.dept || '';
+  document.getElementById('cfg-pid').value  = c.pid  || '';
+  document.getElementById('cfg-addr').value = c.addr || '';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSettings(){ document.getElementById('overlay').classList.remove('open'); }
+function saveSettings(){
+  cfg = {
+    company : document.getElementById('cfg-company').value.trim() || DEFAULT_CONFIG.company,
+    name    : document.getElementById('cfg-name').value.trim(),
+    pos     : document.getElementById('cfg-pos').value.trim(),
+    dept    : document.getElementById('cfg-dept').value.trim(),
+    pid     : document.getElementById('cfg-pid').value.trim(),
+    addr    : document.getElementById('cfg-addr').value.trim(),
+  };
+  localStorage.setItem('p4_expense_cfg', JSON.stringify(cfg));
+  // force=true → always update ใบสรุป fields
+  applyConfig(true);
+  closeSettings();
+  // update all open RC forms
+  document.querySelectorAll('.rc-name').forEach(el => el.value = cfg.name);
+  document.querySelectorAll('.rc-pid').forEach(el  => el.value = cfg.pid);
+  document.querySelectorAll('.rc-addr').forEach(el => el.value = cfg.addr);
+  document.querySelectorAll('.rc-pos').forEach(el  => el.value = cfg.pos);
+  // flash confirmation
+  const btn = document.querySelector('.btn-save');
+  if(btn){ btn.textContent='✓ บันทึกแล้ว'; btn.style.background='#7ad4ae';
+    setTimeout(()=>{ btn.textContent='บันทึกข้อมูล'; btn.style.background=''; },1500); }
+}
+
+/* ─────────────────────────────────────
+   TABS & PRINT
+───────────────────────────────────── */
+function showTab(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  document.querySelector('[data-tab="'+n+'"]').classList.add('active');
+  activeTab = n;
+  // resize textareas now that page is visible
+  const pg = document.getElementById('page-'+n);
+  if(pg) requestAnimationFrame(()=>{
+    pg.querySelectorAll('tbody textarea').forEach(t=>ar(t));
+  });
+}
+
+/* แปลง date YYYY-MM-DD → DD/MM/YYYY */
+function fmtDate(v){
+  if(!v) return '';
+  const p = v.split('-');
+  if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
+  return v;
+}
+
+/* แทนที่ form elements ด้วย <span> ก่อนพิมพ์ */
+function flattenForPrint(container){
+  const TM=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+            'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const swapped = [];
+
+  // ก่อนอื่น: ซ่อน month picker wrapper ทั้งก้อน แล้วใส่ span ข้างๆ
+  container.querySelectorAll('input[type=month]').forEach(el=>{
+    let text = '';
+    if(el.value){
+      const [y,m] = el.value.split('-');
+      text = TM[parseInt(m)-1] + ' ' + y;
+    }
+    const wrapper = el.closest('div[style*="inline-flex"]') || el.parentNode;
+    const span = document.createElement('span');
+    span.className = 'pv';
+    span.textContent = text;
+    span.style.fontWeight = '600';
+    wrapper.parentNode.insertBefore(span, wrapper);
+    wrapper.style.display = 'none';
+    swapped.push({el: wrapper, span});
+  });
+
+  // ส่วนที่เหลือ: input, select, textarea (ข้ามพวก month ที่ทำไปแล้ว)
+  container.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.closest('.no-print')) return;
+    if(el.type === 'month') return;
+    if(el.type === 'checkbox'){
+      // Convert inv checkbox to มี/ไม่มี text
+      if(el.id && el.id.startsWith('inv-')){
+        const text = el.checked ? 'มี' : 'ไม่มี';
+        const span = document.createElement('span');
+        span.className = 'pv';
+        span.textContent = text;
+        span.style.fontWeight = '400';
+        span.style.fontSize = '9pt';
+        span.style.color = '#000';
+        el.parentNode.insertBefore(span, el);
+        el.style.display = 'none';
+        // hide the label span too
+        const lbl = el.parentNode.querySelector('span[id^="inv-lbl"]');
+        if(lbl){ lbl.setAttribute('data-print-hidden','1'); lbl.style.setProperty('display','none','important'); swapped.push({el: lbl, span: null}); }
+        swapped.push({el, span});
+      }
+      return;
+    }
+    let text = '';
+    if(el.tagName==='SELECT'){
+      text = el.options[el.selectedIndex]?.text || '';
+    } else if(el.type==='date'){
+      text = fmtDate(el.value);
+    } else {
+      text = el.value || '';
+    }
+    const span = document.createElement('span');
+    span.className = 'pv';
+    span.textContent = text;
+    el.parentNode.insertBefore(span, el);
+    el.style.display = 'none';
+    swapped.push({el, span});
+  });
+  return swapped;
+}
+/* restore หลังพิมพ์ */
+function restoreAfterPrint(swapped){
+  swapped.forEach(({el, span})=>{
+    if(el){ el.style.removeProperty('display'); el.removeAttribute('data-print-hidden'); }
+    if(span) span.remove();
+  });
+}
+
+function doPrint(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
+  document.getElementById('page-'+activeTab).classList.add('print-active');
+  // แสดง reminder ถ้ายังไม่เคยปิด
+  if(!localStorage.getItem('p4_print_tip_seen')){
+    document.getElementById('print-tip').style.display='flex';
+  } else {
+    window.print();
+  }
+}
+function confirmPrint(dontShow){
+  if(dontShow) localStorage.setItem('p4_print_tip_seen','1');
+  document.getElementById('print-tip').style.display='none';
+  window.print();
+}
+function cancelPrint(){
+  document.getElementById('print-tip').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
+}
+
+/* beforeprint/afterprint ทำหน้าที่ swap เพียงที่เดียว
+   ครอบคลุมทั้งปุ่มในระบบและ Ctrl+P */
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{
+    document.querySelectorAll('.et tbody tr textarea, #oil-container textarea').forEach(t=>ar(t));
+  }, 500);
+});
+window.addEventListener('beforeprint', ()=>{
+  // clear any lingering inline backgrounds on table rows
+  document.querySelectorAll('.et tbody tr, .et tbody td').forEach(el=>{ el.style.background=''; el.style.transition=''; });
+  // ถ้ายังไม่มี print-active (กด Ctrl+P ตรงๆ) ให้ใช้ active แทน
+  let pg = document.querySelector('.page.print-active');
+  if(!pg){ pg = document.querySelector('.page.active'); if(pg) pg.classList.add('print-active'); }
+  if(pg && !pg._bpSwapped) pg._bpSwapped = flattenForPrint(pg);
+});
+window.addEventListener('afterprint', ()=>{
+  document.querySelectorAll('.page.print-active').forEach(pg=>{
+    if(pg._bpSwapped){ restoreAfterPrint(pg._bpSwapped); pg._bpSwapped = null; }
+  });
+});
+
+/* ─────────────────────────────────────
+   UTILITIES
+───────────────────────────────────── */
+function nid(){ return ++rid; }
+function g(n){ return parseFloat(String(n).replace(/,/g,''))||0; }
+function fmtInput(el){
+  const raw = parseFloat(String(el.value).replace(/,/g,''));
+  if(!isNaN(raw) && el.value !== '') el.value = raw.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
+}
+function unfmtInput(el){
+  el.value = String(el.value).replace(/,/g,'');
+}
+function pidInput(el){
+  let v = el.value.replace(/\D/g,'').slice(0,13);
+  let r = '';
+  if(v.length > 0)  r = v.slice(0,1);
+  if(v.length > 1)  r += '-' + v.slice(1,5);
+  if(v.length > 5)  r += '-' + v.slice(5,10);
+  if(v.length > 10) r += '-' + v.slice(10,12);
+  if(v.length > 12) r += '-' + v.slice(12,13);
+  el.value = r;
+}
+function fmt(n){ return n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท'; }
+function ar(el){ const ov=el.style.overflow; el.style.overflow='hidden'; el.style.height='0'; el.style.height=Math.max(el.scrollHeight,32)+'px'; el.style.overflow=ov; }
+function saveMsgText(){
+  const d = new Date();
+  return 'บันทึกอัตโนมัติแล้ว ✓  ' + d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+function reIdx(tbId){
+  document.querySelectorAll('#'+tbId+' tr').forEach((t,i)=>{
+    const c = t.querySelector('.c-idx'); if(c) c.textContent=i+1;
+  });
+}
+function delR(id, tbId, calcFn){
+  document.getElementById('r'+id)?.remove();
+  reIdx(tbId); calcFn();
+}
+function catOpts(sel){
+  return CATS.map(c=>`<option${c===sel?' selected':''}>${c}</option>`).join('');
+}
+function delIcon(id, tbId, calcFn){
+  return `<button class="btn-del" onclick="delR(${id},'${tbId}',${calcFn})">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
+    </svg></button>`;
+}
+
+/* ─────────────────────────────────────
+   THAI BAHT TEXT
+───────────────────────────────────── */
+function bahtText(a){
+  if(!a||a===0) return 'ศูนย์บาทถ้วน';
+  const O=['','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+  const T=['','สิบ','ยี่สิบ','สามสิบ','สี่สิบ','ห้าสิบ','หกสิบ','เจ็ดสิบ','แปดสิบ','เก้าสิบ'];
+  function grp(n){
+    if(!n)return''; if(n<10)return O[n];
+    if(n<100){const t=Math.floor(n/10),o=n%10;return(t===1?'สิบ':T[t])+(o?O[o]:'');}
+    if(n<1e3){return O[Math.floor(n/100)]+'ร้อย'+grp(n%100);}
+    if(n<1e4){const t=Math.floor(n/1e3);return(t===1?'หนึ่ง':O[t])+'พัน'+grp(n%1e3);}
+    if(n<1e5) return grp(Math.floor(n/1e4))+'หมื่น'+grp(n%1e4);
+    if(n<1e6) return grp(Math.floor(n/1e5))+'แสน'+grp(n%1e5);
+    return grp(Math.floor(n/1e6))+'ล้าน'+grp(n%1e6);
+  }
+  const r=Math.round(a*100), b=Math.floor(r/100), s=r%100;
+  return grp(b)+'บาท'+(s===0?'ถ้วน':grp(s)+'สตางค์');
+}
+
+/* ─────────────────────────────────────
+   OVERDUE CHECK (>1 month)
+───────────────────────────────────── */
+function checkOverdue(){
+  const docDate = new Date(document.getElementById('s1-date').value);
+  if(isNaN(docDate)) return;
+  const cutoff = new Date(docDate);
+  cutoff.setMonth(cutoff.getMonth() - 1); // oldest allowed
+  let overdueItems = [];
+  document.querySelectorAll('#s1-body tr').forEach((tr,i)=>{
+    const d = new Date(tr.querySelector('input[type=date]')?.value);
+    if(!isNaN(d) && d < cutoff){
+      const detail = tr.querySelectorAll('textarea')[0]?.value || `รายการที่ ${i+1}`;
+      overdueItems.push(detail.substring(0,40)+(detail.length>40?'...':''));
+    }
+  });
+  const warn = document.getElementById('s1-overdue-warn');
+  const msg  = document.getElementById('s1-overdue-msg');
+  if(overdueItems.length){
+    msg.innerHTML = `<b>พบ ${overdueItems.length} รายการที่อาจเกินกำหนด 1 เดือน:</b><br>` +
+      overdueItems.map(t=>'• '+t).join('<br>');
+    warn.style.display='flex';
+  } else {
+    warn.style.display='none';
+  }
+}
+
+/* ─────────────────────────────────────
+   AUTOSAVE — บันทึกข้อมูลใบสรุป
+   ทุกครั้งที่มีการเปลี่ยนแปลง
+───────────────────────────────────── */
+const SAVE_KEY = 'p4_s1_draft';
+
+function s1Save(){
+  const header = {
+    date : document.getElementById('s1-date')?.value || '',
+    name : document.getElementById('s1-name')?.value || '',
+    dept : document.getElementById('s1-dept')?.value || '',
+  };
+  const rows = [];
+  document.querySelectorAll('#s1-body tr').forEach(tr=>{
+    const date   = tr.querySelector('input[type=date]')?.value || '';
+    const detail = tr.querySelector('textarea')?.value || '';
+    const cat    = tr.querySelector('select')?.value || '';
+    const amount = tr.querySelectorAll('input[inputmode=decimal]')[0]?.value || '';
+    const invCb  = tr.querySelector('input[type=checkbox][id^="inv-"]');
+  const type   = invCb ? (invCb.checked ? 'vat' : 'novat') : (tr.querySelectorAll('select')[1]?.value || 'novat');
+    const note   = tr.querySelector('td:nth-child(7) textarea')?.value || '';
+    rows.push({date, detail, cat, amount, type, note});
+  });
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({header, rows, ts: Date.now()})); }catch(e){}
+}
+
+function s1Restore(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const {header, rows} = JSON.parse(raw);
+    if(header.date) document.getElementById('s1-date').value = header.date;
+    if(header.name) document.getElementById('s1-name').value = header.name;
+    if(header.dept) document.getElementById('s1-dept').value = header.dept;
+    if(!rows || !rows.length) return false;
+    // ล้าง default rows แล้ว restore
+    document.getElementById('s1-body').innerHTML = '';
+    rows.forEach(r => s1AddRow(r.date, r.detail, r.cat, r.amount, r.type, r.note||''));
+    // อัปเดตปุ่ม RC ตามหมวดที่ restore
+    document.querySelectorAll('#s1-body tr').forEach((tr,i)=>{
+      const catSel=tr.querySelectorAll('select')[0];
+      const rowId=parseInt(tr.id.replace('r',''));
+      if(catSel && rowId) s1CatChange(rowId, catSel);
+    });
+    s1Calc(); checkOverdue();
+    setTimeout(()=>{ document.querySelectorAll('#s1-body tr textarea').forEach(t=>ar(t)); }, 400);
+    return true;
+  }catch(e){ return false; }
+}
+
+function s1ClearDraft(){
+  if(!confirm('ล้างข้อมูลในใบสรุปและเริ่มใหม่?')) return;
+  localStorage.removeItem(SAVE_KEY);
+  document.getElementById('s1-body').innerHTML = '';
+  document.getElementById('s1-date').value = new Date().toISOString().split('T')[0];
+  s1Add(); s1Add(); s1Add();
+  s1Calc();
+}
+
+/* ─────────────────────────────────────
+   PAGE 0 — ใบสรุป
+───────────────────────────────────── */
+/* s1AddRow รับ prefill สำหรับ restore, s1Add เป็น wrapper ไม่มี args */
+function s1AddRow(date, detail, cat, amount, type, note){
+  const id=nid();
+  const tr=document.createElement('tr'); tr.id='r'+id;
+  const selCat = cat || 'ค่าเดินทาง';
+  const selType = type || 'novat';
+  tr.innerHTML=`
+    <td class="c-idx">${document.querySelectorAll('#s1-body tr').length+1}</td>
+    <td><input type="date" value="${date||''}" oninput="s1Calc();checkOverdue();s1Save()"></td>
+    <td><textarea rows="1" placeholder="ดูตัวอย่างข้อความได้ที่แทบ คู่มือ" oninput="ar(this);s1Calc();s1Save()">${detail||''}</textarea></td>
+    <td><select onchange="s1Calc();s1Save();s1CatChange(${id},this)">${catOpts(selCat)}</select></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="0.00" value="${amount||''}" oninput="s1Calc();s1Save()" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td style="text-align:center;vertical-align:middle">
+      <label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="inv-${id}" ${selType==='vat'?'checked':''} onchange="s1TypeChange(${id},this)" style="width:16px;height:16px;accent-color:var(--navy-mid);cursor:pointer">
+        <span id="inv-lbl-${id}" style="font-size:13px;font-weight:400;color:${selType==='vat'?'#0e7a6e':'#d97706'}">${selType==='vat'?'มี':'ไม่มี'}</span>
+      </label>
+    </td>
+    <td style="overflow:hidden"><textarea rows="1" placeholder="-" oninput="ar(this);s1Save()" style="font-size:12px;width:100%;max-width:100%;word-break:break-word;overflow-wrap:break-word;overflow:hidden;resize:none">${note||''}</textarea></td>
+    <td class="no-print" style="text-align:center;vertical-align:middle;padding:5px 3px">
+      <button class="btn-rc" id="rcbtn-${id}" onclick="s1CreateRC(${id})" title="สร้างใบรับรองแทน RC จากรายการนี้">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        สร้าง RC
+      </button>
+    </td>
+    <td class="no-print c-act" style="text-align:center;vertical-align:middle">
+      <button class="btn-del" onclick="s1CopyRow(${id})" title="คัดลอกแถวนี้">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </td>
+    <td class="c-act no-print">${delIcon(id,'s1-body','()=>{s1Calc();s1Save()}')}</td>`;
+  document.getElementById('s1-body').appendChild(tr);
+  const ta = tr.querySelector('textarea');
+  if(ta && detail) setTimeout(()=>ar(ta), 30);
+  const noteTa = tr.querySelector('td:nth-child(7) textarea');
+  if(noteTa && note) setTimeout(()=>ar(noteTa), 30);
+  // update RC button based on category
+  updateRCBtn(id, selCat);
+  reIdx('s1-body'); s1Calc();
+}
+function s1Add(){ s1AddRow(); }
+function s1CopyRow(id){
+  const tr = document.getElementById('r'+id);
+  if(!tr) return;
+  const date   = tr.querySelector('input[type=date]')?.value || '';
+  const detail = tr.querySelector('textarea')?.value || '';
+  const cat    = tr.querySelectorAll('select')[0]?.value || '';
+  const amount = tr.querySelector('input[inputmode=decimal]')?.value || '';
+  const type   = tr.querySelectorAll('select')[1]?.value || 'novat';
+  const note   = tr.querySelectorAll('textarea')[1]?.value || '';
+  s1AddRow(date, detail, cat, amount, type, note);
+  s1Calc(); s1Save();
+  // flash new row
+  const rows = document.querySelectorAll('#s1-body tr');
+  if(rows.length){ const r=rows[rows.length-1]; r.style.transition='background .2s'; r.style.background='#e6f4f0'; setTimeout(()=>r.style.background='',1800); }
+}
+function s1TypeChange(rowId, cb){
+  const isVat = cb.checked;
+  const lbl = document.getElementById('inv-lbl-'+rowId);
+  if(lbl){ lbl.textContent = isVat ? 'มี' : 'ไม่มี'; lbl.style.color = isVat ? '#0e7a6e' : '#d97706'; lbl.style.fontWeight = '400'; lbl.style.fontSize = '13px'; }
+  s1Calc(); s1Save();
+  const btn = document.getElementById('rcbtn-'+rowId);
+  if(btn) btn.style.opacity = isVat ? '0.3' : '1';
+}
+// เรียกทุกครั้งที่เปลี่ยนหมวด — ปรับปุ่ม RC
+function s1CatChange(rowId, sel){
+  s1Calc(); s1Save();
+  updateRCBtn(rowId, sel.value);
+}
+const OIL_CATS = new Set(['ค่าน้ำมัน','ค่ารับรอง','ค่าโฆษณา']);
+
+function updateRCBtn(rowId, cat){
+  const btn = document.getElementById('rcbtn-'+rowId);
+  if(!btn) return;
+  if(cat === 'ค่าทางด่วน'){
+    btn.style.background = 'var(--blue-soft)';
+    btn.style.borderColor = 'var(--blue)';
+    btn.style.color = 'var(--blue)';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ใบคุมสดย่อย`;
+    btn.title = 'คัดลอกข้อมูลเข้าใบคุมเงินสดย่อย (ทางด่วน)';
+    btn.onclick = function(){ s1CopyToToll(rowId); };
+  } else if(OIL_CATS.has(cat)){
+    btn.style.background = 'var(--green-bg)';
+    btn.style.borderColor = '#7ad4ae';
+    btn.style.color = 'var(--green)';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ใบคุม(VAT)`;
+    btn.title = 'คัดลอกข้อมูลเข้าใบคุมเงินสดย่อย (มี VAT)';
+    btn.onclick = function(){ s1CopyToOil(rowId); };
+  } else {
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg> สร้าง RC`;
+    btn.title = 'สร้างใบรับรองแทน RC';
+    btn.onclick = function(){ s1CreateRC(rowId); };
+  }
+}
+
+function s1CopyToOil(rowId){
+  const tr = document.getElementById('r'+rowId);
+  if(!tr) return;
+  const date      = tr.querySelectorAll('input[type=date]')[0]?.value || '';
+  const detail    = tr.querySelector('textarea')?.value || '';
+  const amt       = tr.querySelectorAll('input[inputmode=decimal]')[0]?.value || '';
+  const rowNum    = tr.querySelector('.c-idx')?.textContent?.trim() || '';
+  const rowCat    = tr.querySelectorAll('select')[0]?.value || '';
+
+  showTab(2);
+  // หาใบว่างใบแรกที่มีอยู่แล้ว ถ้าไม่มีจึงสร้างใหม่
+  let targetOil = 0;
+  for(let i = 1; i <= oilCount; i++){
+    const b = document.getElementById('oil-body-'+i);
+    if(b && b.querySelector('tr') === null){ targetOil = i; break; }
+  }
+  if(targetOil === 0){
+    oilAddForm(null, null, rowNum, rowCat);
+    targetOil = oilCount;
+  } else {
+    // อัปเดต label และ cat ของใบว่างที่นำมาใช้
+    const lbl = document.getElementById('oil-label-'+targetOil);
+    if(lbl) { lbl.textContent = 'รายการที่ ' + rowNum; }
+    const catEl2 = document.getElementById('oil-cat-'+targetOil);
+    if(catEl2 && rowCat) catEl2.value = rowCat;
+    oilSave();
+  }
+  oilAdd(targetOil, date, detail, amt);
+
+  const btn = document.getElementById('rcbtn-'+rowId);
+  if(btn){
+    btn.classList.add('linked');
+    btn.style.background = '#e6f8f2';
+    btn.style.borderColor = '#7ad4ae';
+    btn.style.color = '#0032a0';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> คัดลอกแล้ว`;
+  }
+  setTimeout(()=>{
+    document.getElementById('oil-form-'+oilCount)?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 150);
+}
+function s1CopyToToll(rowId){
+  const tr = document.getElementById('r'+rowId);
+  if(!tr) return;
+  const date   = tr.querySelectorAll('input[type=date]')[0]?.value || '';
+  const detail = tr.querySelector('textarea')?.value || '';
+  const amount = tr.querySelectorAll('input[inputmode=decimal]')[0]?.value || '';
+  const rowNum = tr.querySelector('.c-idx')?.textContent?.trim() || '';
+
+  showTab(3);
+  // หาใบว่างใบแรก ถ้าไม่มีจึงสร้างใหม่
+  let targetToll = 0;
+  for(let i = 1; i <= tollCount; i++){
+    const b = document.getElementById('toll-body-'+i);
+    if(b && b.querySelector('tr') === null){ targetToll = i; break; }
+  }
+  if(targetToll === 0){
+    tollAddForm(null, null, rowNum, rowCat);
+    targetToll = tollCount;
+  } else {
+    const lbl2 = document.getElementById('toll-label-'+targetToll);
+    if(lbl2) { lbl2.textContent = 'รายการที่ ' + rowNum; }
+    const tCatEl = document.getElementById('toll-cat-'+targetToll);
+    if(tCatEl && rowCat) tCatEl.value = rowCat;
+    tollSave();
+  }
+  tollAdd(targetToll, date, detail, amount, '1');
+
+  const btn = document.getElementById('rcbtn-'+rowId);
+  if(btn){
+    btn.classList.add('linked');
+    btn.style.background = '#e6f8f2';
+    btn.style.borderColor = '#7ad4ae';
+    btn.style.color = '#0032a0';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> คัดลอกแล้ว`;
+  }
+  setTimeout(()=>{
+    document.getElementById('page-3')?.querySelector('tbody tr:last-child')?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 150);
+}
+
+function s1CreateRC(rowId){
+  const tr = document.getElementById('r'+rowId);
+  if(!tr) return;
+  const date    = tr.querySelectorAll('input[type=date]')[0]?.value || '';
+  const detail  = tr.querySelector('textarea')?.value || '';
+  const amount  = tr.querySelectorAll('input[inputmode=decimal]')[0]?.value || '';
+  const note    = tr.querySelector('td:nth-child(7) textarea')?.value || '';
+  const rowNum  = tr.querySelector('.c-idx')?.textContent?.trim() || '';
+
+  // สร้าง RC ใบใหม่เสมอ — 1 รายการ = 1 ใบ
+  rcAddForm({ date, detail, amount, note, sourceRowId: rowId, rowNum });
+
+  // switch ไป tab RC
+  showTab(1);
+  setTimeout(()=>{
+    const form = document.getElementById('rc-form-'+rcCount);
+    form?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 120);
+
+  // mark button
+  const btn = document.getElementById('rcbtn-'+rowId);
+  if(btn){
+    btn.classList.add('linked');
+    btn.title = 'สร้าง RC แล้ว — คลิกเพื่อเพิ่มใบใหม่';
+    btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12"/></svg> RC แล้ว`;
+  }
+}
+function s1Calc(){
+  let v=0, n=0;
+  document.querySelectorAll('#s1-body tr').forEach(tr=>{
+    const a=g(tr.querySelectorAll('input[inputmode=decimal]')[0]?.value);
+    const cb=tr.querySelector('input[type=checkbox][id^="inv-"]');
+    const isVat = cb ? cb.checked : (tr.querySelectorAll('select')[1]?.value==='vat');
+    if(isVat) v+=a; else n+=a;
+  });
+  const tot=v+n;
+  document.getElementById('s1-sv').textContent=fmt(v);
+  document.getElementById('s1-sn').textContent=fmt(n);
+  document.getElementById('s1-st').textContent=fmt(tot);
+  document.getElementById('s1-atxt').textContent=bahtText(tot);
+}
+
+/* ─────────────────────────────────────
+   PAGE 1 — ใบรับรองแทน RC (dynamic)
+───────────────────────────────────── */
+function rcAddForm(prefill){
+  prefill = prefill || {};
+  rcCount++;
+  const num = rcCount;
+  const label = prefill.rowNum ? `รายการที่ ${prefill.rowNum}` : `รายการที่ ${num}`;
+  const div = document.createElement('div');
+  div.id = 'rc-form-'+num;
+  div.innerHTML = `
+    ${num>1?`<div class="cut-line" style="text-align:center;padding:6px 0;font-size:12px;color:var(--gray-300);letter-spacing:2px">
+      - - - - - - - - ✂ ตัดแบ่งที่นี่ - - - - - - -</div>`:''}
+    <div class="card">
+      <!-- header: logo ซ้าย + ชื่อฟอร์ม ขวา (เหมือนใบสรุป) -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:1px solid var(--gray-100)">
+        <img src="${LOGO_B64}" alt="P4D" style="height:52px;width:auto;object-fit:contain">
+        <div style="text-align:right">
+          <div style="font-size:19px;font-weight:700;color:var(--navy);line-height:1.2">ใบรับรองแทนใบเสร็จรับเงิน</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px">${cfg.company||DEFAULT_CONFIG.company} &nbsp;|&nbsp; ${label}</div>
+        </div>
+        <button class="no-print" onclick="if(confirm('ลบใบรับรองแทน RC (${label}) ออก?')) rcRemoveForm(${num})"
+          style="display:flex;align-items:center;gap:6px;background:var(--red-soft);color:var(--red);border:1px solid #f5c6c6;padding:6px 14px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s"
+          onmouseover="this.style.background='var(--red)';this.style.color='#fff'"
+          onmouseout="this.style.background='var(--red-soft)';this.style.color='var(--red)'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          ลบใบนี้
+        </button>
+      </div>
+      <div class="card-body" style="position:relative">
+        <div class="tbl-wrap">
+          <table class="et">
+            <thead><tr>
+              <th style="width:88px">วัน เดือน ปี</th>
+              <th style="width:55%">รายละเอียดรายจ่าย</th>
+              <th style="width:88px">จำนวนเงิน (฿)</th>
+              <th style="width:140px">หมายเหตุ</th>
+              <th class="c-act no-print"></th>
+            </tr></thead>
+            <tbody id="rc${num}-body"></tbody>
+          </table>
+        </div>
+        <button class="btn-add no-print" onclick="rcAddRow(${num})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          เพิ่มรายการ
+        </button>
+        <div style="padding:0 2px">
+          <div class="totals-box" style="margin-top:10px">
+            <div class="totals-divider"></div>
+            <div class="tr-row grand"><span>รวมทั้งสิ้น</span><span class="tr-val grand" id="rc${num}-total">0.00 บาท</span></div>
+            <div class="amt-words">ตัวอักษร: <b id="rc${num}-atxt">ศูนย์บาทถ้วน</b></div>
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px dashed var(--gray-200);margin:14px 0">
+        <div class="field-row">
+          <div class="field"><label>ข้าพเจ้า (ผู้จ่าย)</label><input type="text" class="rc-name" value="${cfg.name||''}" placeholder="ชื่อ-นามสกุล" oninput="rcSave()"></div>
+          <div class="field"><label>เลขบัตรประชาชน</label><input type="text" inputmode="numeric" class="rc-pid" maxlength="17" value="${cfg.pid||''}" placeholder="x-xxxx-xxxxx-xx-x" oninput="pidInput(this);rcSave()"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>ที่อยู่</label><input type="text" class="rc-addr" value="${cfg.addr||''}" placeholder="ที่อยู่ผู้จ่าย" oninput="rcSave()"></div>
+          <div class="field"><label>ตำแหน่ง</label><input type="text" class="rc-pos" value="${cfg.pos||''}" placeholder="ตำแหน่งงาน" oninput="rcSave()"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>ตั้งแต่วันที่</label><input type="date" id="rc${num}-dfrom" oninput="rcSave()"></div>
+          <div class="field"><label>ถึงวันที่</label><input type="date" id="rc${num}-dto" oninput="rcSave()"></div>
+        </div>
+        <div style="font-size:12.5px;color:var(--gray-700);background:var(--gray-50);padding:9px 12px;border-radius:7px;line-height:1.7;margin-top:6px">
+          ขอรับรองว่า รายจ่ายข้างต้นนี้ไม่อาจเรียกเก็บใบเสร็จรับเงินจากผู้รับได้ และข้าพเจ้าได้จ่ายไปในงานของบริษัทฯ โดยแท้
+        </div>
+        <div class="sig-grid" style="margin-top:12px">
+          <div></div>
+          <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ผู้เบิกจ่าย</div></div>
+          <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">ผู้อนุมัติ</div></div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('rc-container').appendChild(div);
+
+  // scroll new form into view
+  setTimeout(()=>div.scrollIntoView({behavior:'smooth',block:'start'}), 100);
+
+  // add first row — pre-filled if data provided
+  rcAddRow(num, prefill.date||'', prefill.detail||'', prefill.amount||'', prefill.note||'');
+}
+function rcRemoveForm(num){
+  document.getElementById('rc-form-'+num)?.remove();
+  rcSave();
+}
+function rcAddRow(num, prefillDate, prefillDetail, prefillAmount, prefillNote){
+  const id=nid();
+  const tr=document.createElement('tr'); tr.id='r'+id;
+  tr.innerHTML=`
+    <td><input type="date" id="rcd-${id}" value="${prefillDate||''}"
+      oninput="rcCalc(${num});rcSyncDates(${num})"></td>
+    <td><textarea rows="1" placeholder="รายละเอียด เช่น ค่าเดินทางไปกลับงาน LINE Bootcamp จาก เอกชัย 46 ไป สามย่าน"
+      oninput="ar(this);rcCalc(${num})">${prefillDetail||''}</textarea></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="0.00"
+      value="${prefillAmount||''}" oninput="rcCalc(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td><textarea rows="1" placeholder="หมายเหตุ" oninput="ar(this)" style="overflow:hidden;resize:none">${(prefillNote||'').replace(/</g,'&lt;')}</textarea></td>
+    <td class="c-act no-print">${delIcon(id,'rc'+num+'-body','()=>{rcCalc('+num+');rcSyncDates('+num+');}')}</td>`;
+  document.getElementById('rc'+num+'-body').appendChild(tr);
+
+  // auto-resize textarea if pre-filled
+  const ta = tr.querySelector('textarea');
+  if(ta && prefillDetail) setTimeout(()=>ar(ta), 50);
+  const noteTa = tr.querySelectorAll('textarea')[1];
+  if(noteTa && prefillNote) setTimeout(()=>ar(noteTa), 50);
+
+  rcCalc(num);
+  // sync date range after row is added
+  if(prefillDate) rcSyncDates(num);
+}
+function rcCalc(num){
+  let tot=0;
+  document.querySelectorAll('#rc'+num+'-body tr').forEach(tr=>{
+    tot+=g(tr.querySelector('input[inputmode=decimal]')?.value);
+  });
+  document.getElementById('rc'+num+'-total').textContent=fmt(tot);
+  document.getElementById('rc'+num+'-atxt').textContent=bahtText(tot);
+  rcSave();
+}
+function rcSyncDates(num){
+  // collect all dates in this RC form
+  const dates = [];
+  document.querySelectorAll('#rc'+num+'-body tr').forEach(tr=>{
+    const d = tr.querySelector('input[type=date]')?.value;
+    if(d) dates.push(d);
+  });
+  if(!dates.length) return;
+  dates.sort();
+  const dfrom = document.getElementById('rc'+num+'-dfrom');
+  const dto   = document.getElementById('rc'+num+'-dto');
+  if(dfrom) dfrom.value = dates[0];
+  if(dto)   dto.value   = dates[dates.length-1];
+}
+
+/* ─────────────────────────────────────
+   PAGE 2 — ใบคุมเงินสดย่อย (มี VAT) — MULTI FORM
+───────────────────────────────────── */
+const OIL_KEY = 'p4_oil_draft';
+let oilCount = 0;
+
+function oilSave(){
+  const forms=[];
+  document.querySelectorAll('#oil-container>div[id^="oil-form-"]').forEach(div=>{
+    const num=parseInt(div.id.replace('oil-form-',''));
+    const month=div.querySelector('input[type=month]')?.value||'';
+    const rows=[];
+    div.querySelectorAll('tbody tr').forEach(tr=>{
+      rows.push({
+        date:tr.querySelector('input[type=date]')?.value||'',
+        detail:tr.querySelector('textarea')?.value||'',
+        amt:tr.querySelectorAll('input[inputmode=decimal]')[0]?.value||'',
+        vat:tr.querySelectorAll('input[inputmode=decimal]')[1]?.value||''
+      });
+    });
+    const label = document.getElementById('oil-label-'+num)?.textContent || '';
+    const cat = document.getElementById('oil-cat-'+num)?.value || '';
+    forms.push({num, month, label, cat, rows});
+  });
+  try{ localStorage.setItem(OIL_KEY, JSON.stringify({forms,ts:Date.now()})); }catch(e){}
+  const bar=document.getElementById('oil-save-bar');
+  const msg=document.getElementById('oil-save-msg');
+  if(bar){ bar.style.display='flex'; if(msg) msg.textContent=saveMsgText(); }
+}
+function oilRestore(){
+  try{
+    const raw=localStorage.getItem(OIL_KEY); if(!raw) return false;
+    const {forms,ts}=JSON.parse(raw);
+    if(!forms||!forms.length) return false;
+    document.getElementById('oil-container').innerHTML='';
+    oilCount=0;
+    forms.forEach(f=>{
+      oilAddForm(null, f.month, null, f.cat||'');
+      const num=oilCount;
+      // restore label
+      const lblEl = document.getElementById('oil-label-'+num);
+      if(lblEl && f.label) lblEl.textContent = f.label;
+      // restore cat
+      const catEl = document.getElementById('oil-cat-'+num);
+      if(catEl && f.cat) catEl.value = f.cat;
+      f.rows.forEach(r=>{
+        oilAdd(num,r.date,r.detail,r.amt);
+        const lastTr=[...document.querySelectorAll('#oil-body-'+num+' tr')].pop();
+        if(lastTr&&r.vat){
+          const vatEl=lastTr.querySelectorAll('input[inputmode=decimal]')[1];
+          const id=parseInt(lastTr.id.replace('r',''));
+          if(vatEl){vatEl.value=r.vat;oilRowManual(id);}
+        }
+      });
+      oilCalcN(num);
+    });
+    setTimeout(()=>{
+      document.querySelectorAll('#oil-container textarea').forEach(t=>ar(t));
+      document.querySelectorAll('#oil-container input[inputmode=decimal]').forEach(el=>fmtInput(el));
+    }, 400);
+    const d=new Date(ts);
+    const ds=d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('oil-save-bar').style.display='flex';
+    document.getElementById('oil-save-msg').textContent='โหลดข้อมูลที่บันทึกไว้ ('+ds+')';
+    return true;
+  }catch(e){ console.error(e); return false; }
+}
+function oilClearDraft(){
+  if(!confirm('ล้างข้อมูลในใบคุมและเริ่มใหม่?')) return;
+  localStorage.removeItem(OIL_KEY);
+  document.getElementById('oil-container').innerHTML='';
+  oilCount=0;
+  oilAddForm();
+  document.getElementById('oil-save-bar').style.display='none';
+}
+
+function oilAddForm(prefill, prefillMonth, sourceRowNum, prefillCat){
+  prefill=prefill||{};
+  prefillCat = prefillCat || CATS[0];
+  oilCount++;
+  const num=oilCount;
+  const label = sourceRowNum ? `รายการที่ ${sourceRowNum}` : `ใบที่ ${num}`;
+  const now=new Date();
+  const ym=prefillMonth||(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const div=document.createElement('div');
+  div.id='oil-form-'+num;
+  div.innerHTML=`
+    ${num>1?`<div class="cut-line no-print" style="display:flex;align-items:center;gap:12px;padding:20px 0 16px;margin-top:8px">
+      <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+      <div style="display:flex;align-items:center;gap:7px;background:#704C91;color:#fff;border-radius:20px;padding:5px 16px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(112,76,145,.3)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ใบที่ ${num}
+      </div>
+      <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+    </div>`:''}
+    <div class="card" style="border-top:3px solid #704C91">
+      <!-- ── Doc Header ── -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;border-bottom:1px solid var(--gray-100);background:#f8f9fb">
+        <div style="display:flex;align-items:center;gap:14px">
+          <img src="${LOGO_B64}" alt="P4D" style="height:48px;width:auto;object-fit:contain">
+          <div style="width:1px;height:40px;background:#dde1ea"></div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#00205b;line-height:1.2">ใบคุมเงินสดย่อย <span style="font-size:11px;font-weight:400;color:var(--gray-500)">(มี VAT)</span></div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="oil-label-${num}" style="color:#00205b;font-weight:600">${label}</span></div>
+          </div>
+        </div>
+        <button class="no-print" onclick="if(confirm('ลบใบที่ ${num} ออก?')) oilRemoveForm(${num})"
+          style="display:flex;align-items:center;gap:5px;background:none;color:var(--red);border:1px solid #fca5a5;padding:6px 12px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s"
+          onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'"
+          onmouseout="this.style.background='none';this.style.color='var(--red)';this.style.borderColor='#fca5a5'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          ลบใบนี้
+        </button>
+      </div>
+      <!-- ── Meta Row: เดือน + หมวด ── -->
+      <div style="display:flex;align-items:center;gap:0;background:#fff;border-bottom:1px solid var(--gray-100)">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-right:1px solid #C4A3D4">
+          <span style="font-size:11px;font-weight:600;color:#00205b;text-transform:uppercase;letter-spacing:.5px">ประจำเดือน</span>
+          <div style="position:relative;display:inline-flex;align-items:center;background:#fff;border:1.5px solid #C4A3D4;border-radius:7px;padding:5px 10px;gap:6px;cursor:pointer;min-width:145px" onclick="document.getElementById('oil-m-${num}').showPicker&&document.getElementById('oil-m-${num}').showPicker()">
+            <input type="month" id="oil-m-${num}" value="${ym}" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;z-index:1" oninput="oilUpdateMonthLabelN(${num});oilSave()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#704C91;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="oil-ml-${num}" style="font-size:13px;font-weight:600;color:#00205b">${thaiMonthLabel(ym)}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 20px">
+          <span style="font-size:11px;font-weight:600;color:#00205b;text-transform:uppercase;letter-spacing:.5px">หมวด</span>
+          <select id="oil-cat-${num}" onchange="oilSave()"
+            style="border:1.5px solid #C4A3D4;border-radius:7px;padding:5px 10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;color:#00205b;background:#F5EEF9;cursor:pointer;min-width:150px">
+            ${CATS.map(c=>`<option value="${c}"${c===prefillCat?' selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <!-- ── Table ── -->
+      <div class="card-body" style="padding:0">
+        <div class="tbl-wrap"><table class="et" style="table-layout:fixed"><thead><tr>
+          <th style="width:28px;background:#704C91" class="c-idx">#</th>
+          <th style="width:105px;background:#704C91">วันที่</th>
+          <th style="background:#704C91">รายการ</th>
+          <th style="width:110px;background:#704C91">มูลค่า (ก่อน VAT)</th>
+          <th style="width:80px;background:#704C91">VAT 7%</th>
+          <th style="background:#704C91;width:110px">จำนวนเงิน</th>
+          <th style="background:#704C91;width:44px" class="no-print"></th>
+          <th class="c-act no-print" style="background:#704C91;width:28px"></th>
+        </tr></thead><tbody id="oil-body-${num}"></tbody></table></div>
+        <div style="padding:10px 18px">
+          <button class="btn-add no-print" onclick="oilAdd(${num})" style="margin-bottom:0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่มรายการ
+          </button>
+        </div>
+      </div>
+      <!-- ── Totals ── -->
+      <div style="padding:0 18px 16px">
+        <div class="totals-box">
+          <div class="tr-row"><span class="tr-label">รวมมูลค่า</span><span class="tr-val" id="oil-sb-${num}">0.00 บาท</span></div>
+          <div class="tr-row"><span class="tr-label">รวม VAT 7%</span><span class="tr-val" id="oil-sv-${num}">0.00 บาท</span></div>
+          <div class="totals-divider" style="background:#704C91!important"></div>
+          <div class="tr-row grand" style="color:#52336B"><span>รวมจำนวนเงิน</span><span class="tr-val grand" id="oil-st-${num}" style="color:#52336B">0.00 บาท</span></div>
+          <div class="amt-words">ตัวอักษร: <b id="oil-atxt-${num}">ศูนย์บาทถ้วน</b></div>
+        </div>
+      </div>
+      <!-- ── Push to Summary ── -->
+      <div class="no-print" style="margin:0 18px 16px;padding:12px 16px;background:#F5EEF9;border-radius:8px;border:1px solid #C4A3D4;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-700)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#704C91" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          กรอกรายการครบแล้ว → ส่งยอดรวมเป็น 1 บรรทัดไปยัง <b>Tab ① ใบสรุป</b>
+        </div>
+        <button onclick="pushOilToSummary(${num})"
+          style="display:flex;align-items:center;gap:7px;background:#704C91;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;flex-shrink:0"
+          onmouseover="this.style.background='#52336B'" onmouseout="this.style.background='#704C91'"
+          id="oil-push-btn-${num}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"/><line x1="12" y1="18" x2="12" y2="6"/></svg>
+          ส่งยอดสรุปไป Tab ① ใบสรุป
+        </button>
+      </div>
+      <!-- ── Signature ── -->
+      <div style="padding:14px 18px 18px;border-top:1px solid var(--gray-100)">
+        <div style="font-size:11px;font-weight:600;color:#704C91;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">ลายเซ็นอนุมัติ</div>
+        <div class="sig-grid">
+          <div class="sig-box"><div class="sig-line" style="border-bottom-color:#C4A3D4"></div><div class="sig-lbl">ผู้เบิก</div><div class="sig-date">วันที่ ......../........./............</div></div>
+          <div></div>
+          <div class="sig-box"><div class="sig-line" style="border-bottom-color:#C4A3D4"></div><div class="sig-lbl">ผู้อนุมัติ</div><div class="sig-date">วันที่ ......../........./............</div></div>
+        </div>
+        <div class="note-bar" style="margin-top:10px">หมายเหตุ — แนบสลิปเติมน้ำมัน / รูปมิเตอร์ / ระยะทาง Google Maps ทุกครั้ง</div>
+      </div>
+    </div>`;
+  document.getElementById('oil-container').appendChild(div);
+  if(prefill.date||prefill.detail||prefill.amt) oilAdd(num, prefill.date||'', prefill.detail||'', prefill.amt||'');
+  setTimeout(()=>div.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function oilRemoveForm(num){
+  document.getElementById('oil-form-'+num)?.remove();
+  oilSave();
+}
+function oilUpdateMonthLabelN(num){
+  const v=document.getElementById('oil-m-'+num)?.value;
+  const el=document.getElementById('oil-ml-'+num);
+  if(el) el.textContent=thaiMonthLabel(v);
+}
+
+/* ─────────────────────────────────────
+   PAGE 2 — ใบคุมค่าน้ำมัน
+───────────────────────────────────── */
+function oilAdd(num, prefillDate, prefillDetail, prefillAmt){
+  const id=nid();
+  const tr=document.createElement('tr'); tr.id='r'+id;
+  tr.innerHTML=`
+    <td class="c-idx">${document.querySelectorAll('#oil-body-'+num+' tr').length+1}</td>
+    <td><input type="date" value="${prefillDate||''}" oninput="oilCalcN(${num})"></td>
+    <td><textarea rows="1" placeholder="เช่น ค่าน้ำมันเดินทางพบลูกค้า บ.ABC จาก ออฟฟิศ ไป ลาดกระบัง" oninput="ar(this)">${prefillDetail||''}</textarea></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="0.00" value="${prefillAmt||''}" id="ob${id}" oninput="oilRow(${id});oilCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" id="ov${id}" style="background:var(--yellow)" placeholder="0.00" oninput="oilRowManual(${id});oilCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" id="ot${id}" style="background:var(--yellow)" placeholder="auto" oninput="oilRowTotalManual(${id});oilCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="no-print" style="text-align:center;vertical-align:middle">
+      <button class="btn-del" style="color:var(--navy-mid)" onclick="oilCopyRow(${num},${id})" title="คัดลอกแถวนี้">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </td>
+    <td class="c-act no-print">${delIcon(id,'oil-body-'+num,'()=>oilCalcN('+num+')')}</td>`;
+  document.getElementById('oil-body-'+num).appendChild(tr);
+  const ta=tr.querySelector('textarea');
+  if(prefillDetail&&ta) setTimeout(()=>ar(ta),200);
+  if(prefillAmt) oilRow(id);
+  reIdx('oil-body-'+num); oilCalcN(num);
+}
+function oilCopyRow(num, id){
+  const tr=document.getElementById('r'+id); if(!tr) return;
+  const date=tr.querySelector('input[type=date]')?.value||''
+  const detail=tr.querySelector('textarea')?.value||''
+  const amt=document.getElementById('ob'+id)?.value||''
+  oilAdd(num, date, detail, amt);
+}
+function oilCalcN(num){
+  let sb=0,sv=0,st=0;
+  document.querySelectorAll('#oil-body-'+num+' tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input[inputmode=decimal]');
+    sb+=g(ins[0]?.value); sv+=g(ins[1]?.value); st+=g(ins[2]?.value);
+  });
+  document.getElementById('oil-sb-'+num).textContent=fmt(sb);
+  document.getElementById('oil-sv-'+num).textContent=fmt(sv);
+  document.getElementById('oil-st-'+num).textContent=fmt(st);
+  document.getElementById('oil-atxt-'+num).textContent=bahtText(st);
+  oilSave();
+}
+// compat aliases
+function oilCalc(){ if(oilCount>0) oilCalcN(oilCount); }
+function oilCopy(id){ const tr=document.getElementById('r'+id); if(!tr) return; const num=parseInt(tr.closest('[id^="oil-body-"]')?.id?.replace('oil-body-','')||'1'); oilCopyRow(num,id); }
+function round2(n){ return Math.round((n+Number.EPSILON)*100)/100; }
+
+const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                     'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+function thaiMonthLabel(val){
+  if(!val) return 'เลือกเดือน';
+  const [y,m] = val.split('-');
+  return THAI_MONTHS[parseInt(m)-1] + ' ' + y;  // ปี ค.ศ.
+}
+function oilUpdateMonthLabel(){ /* handled per-form by oilUpdateMonthLabelN */ }
+function tollUpdateMonthLabel(){
+  const v = document.getElementById('toll-month')?.value;
+  const el = document.getElementById('toll-month-label');
+  if(el) el.textContent = thaiMonthLabel(v);
+}
+function oilRow(id){
+  const b=g(document.getElementById('ob'+id)?.value);
+  const v=round2(b*0.07);
+  const t=round2(b+v);
+  const ovEl=document.getElementById('ov'+id);
+  if(ovEl) ovEl.value = v ? v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}) : '';
+  const otEl=document.getElementById('ot'+id);
+  if(otEl && !otEl.dataset.manual){
+    otEl.value = t ? t.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}) : '';
+  }
+}
+function oilRowManual(id){
+  const b=g(document.getElementById('ob'+id)?.value);
+  const v=g(document.getElementById('ov'+id)?.value);
+  const t=round2(b+v);
+  const otEl=document.getElementById('ot'+id);
+  if(otEl && !otEl.dataset.manual){
+    otEl.value = t ? t.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}) : '';
+  }
+}
+function oilRowTotalManual(id){
+  // user พิมพ์ใน ot โดยตรง — set flag ป้องกัน auto-calc ทับ
+  const otEl=document.getElementById('ot'+id);
+  if(otEl) otEl.dataset.manual='1';
+}
+function oilCalc(){
+  let sb=0,sv=0,st=0;
+  document.querySelectorAll('#oil-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input[inputmode=decimal]');
+    sb+=g(ins[0]?.value); sv+=g(ins[1]?.value); st+=g(ins[2]?.value);
+  });
+  document.getElementById('oil-sb').textContent=fmt(sb);
+  document.getElementById('oil-sv').textContent=fmt(sv);
+  document.getElementById('oil-st').textContent=fmt(st);
+  document.getElementById('oil-atxt').textContent=bahtText(st);
+  oilSave();
+}
+
+/* ─────────────────────────────────────
+   PAGE 3 — ใบคุมเงินสดย่อย MULTI-FORM
+───────────────────────────────────── */
+const TOLL_KEY = 'p4_toll_draft';
+let tollCount = 0;
+
+function tollSave(){
+  const forms = [];
+  document.querySelectorAll('#toll-container>div[id^="toll-form-"]').forEach(div=>{
+    const num = parseInt(div.id.replace('toll-form-',''));
+    const month = div.querySelector('input[type=month]')?.value||'';
+    const cat = document.getElementById('toll-cat-'+num)?.value||'';
+    const label = document.getElementById('toll-label-'+num)?.textContent||'';
+    const rows = [];
+    div.querySelectorAll('tbody tr').forEach(tr=>{
+      const ttId = parseInt(tr.id.replace('r',''));
+      const ttEl = document.getElementById('tt'+ttId);
+      rows.push({
+        date:   tr.querySelector('input[type=date]')?.value||'',
+        detail: tr.querySelector('textarea')?.value||'',
+        price:  tr.querySelectorAll('input[inputmode=decimal]')[0]?.value||'',
+        count:  tr.querySelectorAll('input[inputmode=decimal]')[1]?.value||'1',
+        total:  ttEl?.value||'',
+        totalManual: ttEl?.dataset.manual||''
+      });
+    });
+    forms.push({num, month, cat, label, rows});
+  });
+  try{ localStorage.setItem(TOLL_KEY, JSON.stringify({forms, ts:Date.now()})); }catch(e){}
+  const bar=document.getElementById('toll-save-bar');
+  const msg=document.getElementById('toll-save-msg');
+  if(bar){ bar.style.display='flex'; if(msg) msg.textContent=saveMsgText(); }
+}
+function tollRestore(){
+  try{
+    const raw=localStorage.getItem(TOLL_KEY); if(!raw) return false;
+    const {forms,ts}=JSON.parse(raw);
+    if(!forms||!forms.length) return false;
+    document.getElementById('toll-container').innerHTML='';
+    tollCount=0;
+    forms.forEach(f=>{
+      tollAddForm(null, f.month, null, f.cat||'');
+      const num=tollCount;
+      const lblEl = document.getElementById('toll-label-'+num);
+      if(lblEl && f.label) lblEl.textContent = f.label;
+      f.rows.forEach(r=>{
+        tollAdd(num, r.date, r.detail, r.price, r.count);
+        const lastTr=[...document.querySelectorAll('#toll-body-'+num+' tr')].pop();
+        if(lastTr && r.total){
+          const ttId=parseInt(lastTr.id.replace('r',''));
+          const ttEl=document.getElementById('tt'+ttId);
+          if(ttEl){ ttEl.value=r.total; if(r.totalManual) ttEl.dataset.manual='1'; }
+        }
+      });
+      tollCalcN(num);
+    });
+    setTimeout(()=>{
+      document.querySelectorAll('#toll-container textarea').forEach(t=>ar(t));
+      document.querySelectorAll('#toll-container input[inputmode=decimal]').forEach(el=>fmtInput(el));
+    }, 400);
+    const d=new Date(ts);
+    const ds=d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('toll-save-bar').style.display='flex';
+    document.getElementById('toll-save-msg').textContent='โหลดข้อมูลที่บันทึกไว้ ('+ds+')';
+    return true;
+  }catch(e){ return false; }
+}
+function tollClearDraft(){
+  if(!confirm('ล้างข้อมูลในใบคุมและเริ่มใหม่?')) return;
+  localStorage.removeItem(TOLL_KEY);
+  document.getElementById('toll-container').innerHTML='';
+  tollCount=0;
+  tollAddForm();
+  document.getElementById('toll-save-bar').style.display='none';
+}
+function tollUpdateMonthLabelN(num){
+  const v=document.getElementById('toll-m-'+num)?.value;
+  const el=document.getElementById('toll-ml-'+num);
+  if(el) el.textContent=thaiMonthLabel(v);
+}
+function tollAddForm(prefill, prefillMonth, sourceRowNum, prefillCat){
+  prefill=prefill||{};
+  prefillCat = prefillCat || CATS[2]; /* ค่าทางด่วน */
+  tollCount++;
+  const num=tollCount;
+  const label = sourceRowNum ? `รายการที่ ${sourceRowNum}` : `ใบที่ ${num}`;
+  const now=new Date();
+  const ym=prefillMonth||(now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const div=document.createElement('div');
+  div.id='toll-form-'+num;
+  div.innerHTML=`
+    ${num>1?`<div class="cut-line no-print" style="display:flex;align-items:center;gap:12px;padding:20px 0 16px;margin-top:8px">
+      <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+      <div style="display:flex;align-items:center;gap:7px;background:#0f766e;color:#fff;border-radius:20px;padding:5px 16px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 8px rgba(0,50,160,.25)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ใบที่ ${num}
+      </div>
+      <div style="flex:1;height:1px;background:var(--gray-200)"></div>
+    </div>`:''}
+    <div class="card" style="border-top:3px solid #0e7a6e">
+      <!-- ── Doc Header ── -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;border-bottom:1px solid var(--gray-100);background:#f8f9fb">
+        <div style="display:flex;align-items:center;gap:14px">
+          <img src="${LOGO_B64}" alt="P4D" style="height:48px;width:auto;object-fit:contain">
+          <div style="width:1px;height:40px;background:rgba(255,255,255,.25)"></div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#00205b;line-height:1.2">ใบคุมเงินสดย่อย</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="toll-label-${num}" style="color:#00205b;font-weight:600">${label}</span></div>
+          </div>
+        </div>
+        <button class="no-print" onclick="if(confirm('ลบใบที่ ${num} ออก?')) tollRemoveForm(${num})"
+          style="display:flex;align-items:center;gap:5px;background:none;color:var(--red);border:1px solid #fca5a5;padding:6px 12px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s"
+          onmouseover="this.style.background='var(--red)';this.style.color='#fff';this.style.borderColor='var(--red)'"
+          onmouseout="this.style.background='none';this.style.color='var(--red)';this.style.borderColor='#fca5a5'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          ลบใบนี้
+        </button>
+      </div>
+      <!-- ── Meta Row ── -->
+      <div style="display:flex;align-items:center;gap:0;background:#fff;border-bottom:1px solid var(--gray-100)">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-right:1px solid var(--gray-100)">
+          <span style="font-size:11px;font-weight:600;color:#00205b;text-transform:uppercase;letter-spacing:.5px">ประจำเดือน</span>
+          <div style="position:relative;display:inline-flex;align-items:center;background:#fff;border:1.5px solid #a7d9d5;border-radius:7px;padding:5px 10px;gap:6px;cursor:pointer;min-width:145px" onclick="document.getElementById('toll-m-${num}').showPicker&&document.getElementById('toll-m-${num}').showPicker()">
+            <input type="month" id="toll-m-${num}" value="${ym}" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;z-index:1" oninput="tollUpdateMonthLabelN(${num});tollSave()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#0e7a6e;flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="toll-ml-${num}" style="font-size:13px;font-weight:600;color:#00205b">${thaiMonthLabel(ym)}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 20px">
+          <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px">หมวด</span>
+          <select id="toll-cat-${num}" onchange="tollSave()"
+            style="border:1.5px solid #b2dbd8;border-radius:7px;padding:5px 10px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;color:#0f766e;background:#f0faf9;cursor:pointer;min-width:150px">
+            ${CATS.map(c=>`<option value="${c}"${c===prefillCat?' selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <!-- ── Table ── -->
+      <div class="card-body" style="padding:0">
+        <div class="tbl-wrap"><table class="et" style="table-layout:fixed;--th-bg:#0e7a6e"><thead><tr>
+          <th style="width:28px;background:#0e7a6e" class="c-idx">#</th>
+          <th style="width:105px;background:#0e7a6e">วันที่</th>
+          <th style="background:#0e7a6e">รายการ</th>
+          <th style="width:100px;background:#0e7a6e">มูลค่า</th>
+          <th style="width:75px;background:#0e7a6e">จำนวน</th>
+          <th style="width:115px;background:#0e7a6e">จำนวนเงินทั้งสิ้น</th>
+          <th style="width:44px;background:#0e7a6e" class="no-print"></th>
+          <th class="c-act no-print" style="width:28px;background:#0e7a6e"></th>
+        </tr></thead><tbody id="toll-body-${num}"></tbody></table></div>
+        <div style="padding:10px 18px">
+          <button class="btn-add no-print" onclick="tollAdd(${num})" style="margin-bottom:0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่มรายการ
+          </button>
+        </div>
+      </div>
+      <!-- ── Totals ── -->
+      <div style="padding:0 18px 16px">
+        <div class="totals-box">
+          <div class="totals-divider"></div>
+          <div class="tr-row grand"><span>รวมจำนวนเงิน</span><span class="tr-val grand" id="toll-st-${num}">0.00 บาท</span></div>
+          <div class="amt-words">ตัวอักษร: <b id="toll-atxt-${num}">ศูนย์บาทถ้วน</b></div>
+        </div>
+      </div>
+      <!-- ── Push to Summary ── -->
+      <div class="no-print" style="margin:0 18px 16px;padding:12px 16px;background:#f0faf9;border-radius:8px;border:1px solid #b2dbd8;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gray-700)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          กรอกรายการครบแล้ว → ส่งยอดรวมเป็น 1 บรรทัดไปยัง <b>Tab ① ใบสรุป</b>
+        </div>
+        <button onclick="pushTollToSummary(${num})"
+          style="display:flex;align-items:center;gap:7px;background:#0f766e;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;flex-shrink:0"
+          onmouseover="this.style.background='#085c55'" onmouseout="this.style.background='#0f766e'"
+          id="toll-push-btn-${num}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"/><line x1="12" y1="18" x2="12" y2="6"/></svg>
+          ส่งยอดสรุปไป Tab ① ใบสรุป
+        </button>
+      </div>
+      <!-- ── Signature ── -->
+      <div style="padding:14px 18px 18px;border-top:1px solid var(--gray-100)">
+        <div style="font-size:11px;font-weight:600;color:#52336B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">ลายเซ็นอนุมัติ</div>
+        <div class="sig-grid">
+          <div class="sig-box"><div class="sig-line" style="border-bottom-color:#C4A3D4"></div><div class="sig-lbl">ผู้เบิก</div><div class="sig-date">วันที่ ......../........./............</div></div>
+          <div></div>
+          <div class="sig-box"><div class="sig-line" style="border-bottom-color:#a7d9d5"></div><div class="sig-lbl">ผู้อนุมัติ</div><div class="sig-date">วันที่ ......../........./............</div></div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('toll-container').appendChild(div);
+  setTimeout(()=>div.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function tollRemoveForm(num){
+  document.getElementById('toll-form-'+num)?.remove();
+  tollSave();
+}
+function tollAdd(num, prefillDate, prefillDetail, prefillPrice, prefillCount){
+  const id=nid();
+  const tr=document.createElement('tr'); tr.id='r'+id;
+  tr.innerHTML=`
+    <td class="c-idx">${document.querySelectorAll('#toll-body-'+num+' tr').length+1}</td>
+    <td><input type="date" value="${prefillDate||''}" oninput="tollCalcN(${num})"></td>
+    <td><textarea rows="1" placeholder="เช่น ค่าทางด่วน ขาไป-กลับ พบลูกค้า บ.ABC" oninput="ar(this)">${prefillDetail||''}</textarea></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="0" value="${prefillPrice||''}" id="tp${id}" oninput="tollRow(${id},${num});tollCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" value="${prefillCount||1}" id="tc${id}" oninput="tollRow(${id},${num});tollCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" id="tt${id}" style="background:var(--yellow)" placeholder="auto" oninput="tollRowTotalManual(${id});tollCalcN(${num})" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="no-print" style="text-align:center;vertical-align:middle">
+      <button class="btn-del" style="color:var(--navy-mid)" onclick="tollCopy(${id},${num})" title="คัดลอกแถวนี้">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </td>
+    <td class="c-act no-print">${delIcon(id,'toll-body-'+num,'()=>{tollCalcN('+num+');tollSave()}')}</td>`;
+  document.getElementById('toll-body-'+num).appendChild(tr);
+  const ta=tr.querySelector('textarea');
+  if(prefillDetail && ta) setTimeout(()=>ar(ta), 200);
+  if(prefillPrice) tollRow(id, num);
+  reIdx('toll-body-'+num); tollCalcN(num);
+}
+function tollCopy(id, num){
+  const tr=document.getElementById('r'+id);
+  if(!tr) return;
+  const date=tr.querySelector('input[type=date]')?.value||'';
+  const detail=tr.querySelector('textarea')?.value||'';
+  const price=document.getElementById('tp'+id)?.value||'';
+  const count=document.getElementById('tc'+id)?.value||'1';
+  tollAdd(num, date, detail, price, count);
+}
+function tollRow(id, num){
+  const p=g(document.getElementById('tp'+id)?.value);
+  const cnt=g(document.getElementById('tc'+id)?.value)||1;
+  const ttEl=document.getElementById('tt'+id);
+  if(ttEl && !ttEl.dataset.manual){
+    const v=Math.round(p*cnt*100)/100;
+    ttEl.value = v ? v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}) : '';
+  }
+}
+function tollRowTotalManual(id){
+  const ttEl=document.getElementById('tt'+id);
+  if(ttEl) ttEl.dataset.manual='1';
+}
+function tollCalcN(num){
+  let st=0;
+  document.querySelectorAll('#toll-body-'+num+' tr').forEach(tr=>{
+    st+=g(tr.querySelectorAll('input[inputmode=decimal]')[2]?.value);
+  });
+  document.getElementById('toll-st-'+num).textContent=fmt(st);
+  document.getElementById('toll-atxt-'+num).textContent=bahtText(st);
+  tollSave();
+}
+
+/* ─────────────────────────────────────
+   PAGE 4 — ใบคุมค่ารับรอง
+───────────────────────────────────── */
+function recAdd(){
+  const id=nid();
+  const tr=document.createElement('tr'); tr.id='r'+id;
+  tr.innerHTML=`
+    <td class="c-idx">${document.querySelectorAll('#rec-body tr').length+1}</td>
+    <td><input type="date" oninput="recCalc()"></td>
+    <td><textarea rows="1" placeholder="เช่น ค่าอาหารเลี้ยงรับรองลูกค้า บ.ABC งาน..." oninput="ar(this)"></textarea></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="0.00" id="rb${id}" oninput="recRow(${id});recCalc()" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" placeholder="(ถ้ามี)" id="rv${id}" oninput="recRow(${id});recCalc()" onblur="fmtInput(this)" onfocus="unfmtInput(this)"></td>
+    <td class="c-num"><input type="text" inputmode="decimal" id="rt${id}" style="background:#e8f4fd" placeholder="auto" readonly tabindex="-1"></td>
+    <td class="c-act no-print">${delIcon(id,'rec-body','recCalc')}</td>`;
+  document.getElementById('rec-body').appendChild(tr);
+  reIdx('rec-body'); recCalc();
+}
+function recRow(id){
+  const b=g(document.getElementById('rb'+id)?.value);
+  const v=g(document.getElementById('rv'+id)?.value);
+  document.getElementById('rt'+id).value=Math.round((b+v)*100)/100||'';
+}
+function recCalc(){
+  let sb=0,sv=0,st=0;
+  document.querySelectorAll('#rec-body tr').forEach(tr=>{
+    const ins=tr.querySelectorAll('input[inputmode=decimal]');
+    sb+=g(ins[0]?.value); sv+=g(ins[1]?.value); st+=g(ins[2]?.value);
+  });
+  document.getElementById('rec-sb').textContent=fmt(sb);
+  document.getElementById('rec-sv').textContent=fmt(sv);
+  document.getElementById('rec-st').textContent=fmt(st);
+  document.getElementById('rec-atxt').textContent=bahtText(st);
+}
+
+
+/* ─────────────────────────────────────
+   เคสที่ 2 — PUSH PETTY TOTAL → TAB 1
+───────────────────────────────────── */
+function showPushToast(msg){
+  let t = document.getElementById('push-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'push-toast';
+    t.style.cssText = 'position:fixed;top:70px;right:18px;z-index:9999;background:#00205b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.22);max-width:340px;line-height:1.5;display:none;font-family:Sarabun,sans-serif';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(()=>{ t.style.display = 'none'; }, 3400);
+}
+
+function flashRow(tr){
+  tr.style.transition = 'background .2s';
+  tr.style.background = '#e6f4f0';
+  setTimeout(()=>{ tr.style.background = ''; }, 2200);
+}
+
+function pushOilToSummary(num){
+  // อ่านยอดรวม (จาก text ของ span — ตัดคำว่า " บาท" ออก)
+  const totalEl = document.getElementById('oil-st-'+num);
+  const monthEl = document.getElementById('oil-ml-'+num);
+  if(!totalEl) return;
+  const totalText = totalEl.textContent.replace(/[,\sบาท]/g,'');
+  const totalVal  = parseFloat(totalText) || 0;
+  if(totalVal === 0){
+    alert('ยังไม่มีรายการในใบคุม กรุณากรอกข้อมูลก่อนส่ง'); return;
+  }
+  const monthLabel = monthEl ? monthEl.textContent.trim() : '';
+  const catEl = document.getElementById('oil-cat-'+num);
+  const cat = catEl ? catEl.value : 'ค่าน้ำมัน';
+  const desc = 'รวม' + cat + ' เดือน ' + monthLabel;
+
+  // สร้าง row ใน s1-body
+  s1AddRow('', desc, cat, fmt2(totalVal), 'vat', 'ดูรายละเอียดเพิ่มที่ใบคุมเงินสดย่อย');
+  s1Calc(); s1Save();
+
+  // เปลี่ยนปุ่มเป็น "ส่งแล้ว"
+  const btn = document.getElementById('oil-push-btn-'+num);
+  if(btn){
+    btn.style.background = '#704C91';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ส่งไป Tab ① แล้ว';
+    setTimeout(()=>{
+      btn.style.background = '#704C91';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"/><line x1="12" y1="18" x2="12" y2="6"/></svg> ส่งยอดสรุปไป Tab ① ใบสรุป';
+    }, 3000);
+  }
+
+  // สลับไป Tab 1 แล้ว highlight แถวล่าสุด
+  setTimeout(()=>{
+    showTab(0);
+    const rows = document.querySelectorAll('#s1-body tr');
+    if(rows.length) flashRow(rows[rows.length-1]);
+    showPushToast('✓ เพิ่มยอด ฿' + totalVal.toLocaleString('th-TH',{minimumFractionDigits:2}) + ' ไป Tab ① เรียบร้อยแล้ว');
+  }, 300);
+}
+
+function pushTollToSummary(num){
+  const totalEl = document.getElementById('toll-st-'+num);
+  const monthEl = document.getElementById('toll-ml-'+num);
+  const catEl   = document.getElementById('toll-cat-'+num);
+  if(!totalEl) return;
+  const totalRaw = totalEl.textContent.replace(/[^\d.]/g,'');
+  const totalVal = parseFloat(totalRaw) || 0;
+  if(totalVal === 0){ alert('ยังไม่มีรายการในใบคุม กรุณากรอกข้อมูลก่อนส่ง'); return; }
+  const monthLabel = monthEl ? monthEl.textContent.trim() : '';
+  const cat = catEl ? catEl.value : 'ค่าทางด่วน';
+  const desc = 'รวม' + cat + ' เดือน ' + monthLabel;
+  s1AddRow('', desc, cat, fmt2(totalVal), 'novat', 'ดูรายละเอียดเพิ่มที่ใบคุมเงินสดย่อย');
+  s1Calc(); s1Save();
+  const btn = document.getElementById('toll-push-btn-'+num);
+  if(btn){
+    btn.style.background = '#704C91';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> ส่งไป Tab ① แล้ว';
+    setTimeout(()=>{ btn.style.background='#0e7a6e'; btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"/><line x1="12" y1="18" x2="12" y2="6"/></svg> ส่งยอดสรุปไป Tab ① ใบสรุป'; }, 3000);
+  }
+  setTimeout(()=>{
+    showTab(0);
+    const rows = document.querySelectorAll('#s1-body tr');
+    if(rows.length) flashRow(rows[rows.length-1]);
+    showPushToast('✓ เพิ่มยอด ฿' + totalVal.toLocaleString('th-TH',{minimumFractionDigits:2}) + ' ไป Tab ① เรียบร้อยแล้ว');
+  }, 300);
+}
+
+/* helper: convert number to plain decimal string for s1AddRow */
+function fmt2(n){ return n ? String(Math.round(n*100)/100) : ''; }
+
+
+/* ─────────────────────────────────────
+   RC SAVE / RESTORE
+───────────────────────────────────── */
+const RC_KEY = 'p4_rc_draft';
+
+function rcSave(){
+  const forms = [];
+  document.querySelectorAll('#rc-container > div[id^="rc-form-"]').forEach(div=>{
+    const num = parseInt(div.id.replace('rc-form-',''));
+    const rows = [];
+    div.querySelectorAll('#rc'+num+'-body tr').forEach(tr=>{
+      rows.push({
+        date  : tr.querySelector('input[type=date]')?.value || '',
+        detail: tr.querySelector('textarea')?.value || '',
+        amount: tr.querySelector('input[inputmode=decimal]')?.value || '',
+        note  : tr.querySelectorAll('textarea')[1]?.value || '',
+      });
+    });
+    forms.push({
+      num,
+      rowNum : div.querySelector('.card > div > div:nth-child(2)')?.textContent?.split('|')?.[1]?.trim() || '',
+      name   : div.querySelector('.rc-name')?.value || '',
+      pid    : div.querySelector('.rc-pid')?.value  || '',
+      addr   : div.querySelector('.rc-addr')?.value || '',
+      pos    : div.querySelector('.rc-pos')?.value  || '',
+      dfrom  : document.getElementById('rc'+num+'-dfrom')?.value || '',
+      dto    : document.getElementById('rc'+num+'-dto')?.value   || '',
+      rows,
+    });
+  });
+  try{ localStorage.setItem(RC_KEY, JSON.stringify({forms, ts: Date.now()})); }catch(e){}
+}
+
+function rcClearAll(){
+  if(!confirm('ล้างใบรับรองแทน RC ทั้งหมด?')) return;
+  localStorage.removeItem(RC_KEY);
+  document.getElementById('rc-container').innerHTML = '';
+  rcCount = 0;
+}
+
+function rcRestore(){
+  try{
+    const raw = localStorage.getItem(RC_KEY);
+    if(!raw) return false;
+    const {forms, ts} = JSON.parse(raw);
+    if(!forms || !forms.length) return false;
+    document.getElementById('rc-container').innerHTML = '';
+    rcCount = 0;
+    forms.forEach(f=>{
+      rcAddForm({ rowNum: f.rowNum });
+      const num = rcCount;
+      // restore personal fields
+      const div = document.getElementById('rc-form-'+num);
+      if(!div) return;
+      const nameEl = div.querySelector('.rc-name'); if(nameEl) nameEl.value = f.name;
+      const pidEl  = div.querySelector('.rc-pid');  if(pidEl)  pidEl.value  = f.pid;
+      const addrEl = div.querySelector('.rc-addr'); if(addrEl) addrEl.value = f.addr;
+      const posEl  = div.querySelector('.rc-pos');  if(posEl)  posEl.value  = f.pos;
+      const dfEl   = document.getElementById('rc'+num+'-dfrom'); if(dfEl) dfEl.value = f.dfrom;
+      const dtEl   = document.getElementById('rc'+num+'-dto');   if(dtEl) dtEl.value = f.dto;
+      // restore rows (first row was auto-created by rcAddForm — remove it, re-add from saved)
+      document.getElementById('rc'+num+'-body').innerHTML = '';
+      f.rows.forEach(r=>{ rcAddRow(num, r.date, r.detail, r.amount, r.note); });
+      rcCalc(num);
+    });
+    setTimeout(()=>{
+      document.querySelectorAll('#rc-container textarea').forEach(t=>ar(t));
+      document.querySelectorAll('#rc-container input[inputmode=decimal]').forEach(el=>fmtInput(el));
+    }, 400);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ─────────────────────────────────────
+   INIT
+───────────────────────────────────── */
+(function init(){
+  loadConfig();
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  ['oil-month','toll-month'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value = ym;
+  });
+  oilUpdateMonthLabel(); tollUpdateMonthLabel();
+
+  // restore draft หรือ init default
+  const restored = s1Restore();
+  if(!restored){
+    document.getElementById('s1-date').value = today;
+    s1Add(); s1Add(); s1Add();
+  } else {
+    // แสดง bar พร้อมเวลาที่บันทึก
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(raw){
+        const {ts} = JSON.parse(raw);
+        const d = new Date(ts);
+        const dstr = d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        document.getElementById('s1-save-msg').textContent = `โหลดข้อมูลที่บันทึกไว้ (${dstr})`;
+      }
+    }catch(e){}
+    document.getElementById('s1-save-bar').style.display = 'flex';
+  }
+
+  rcRestore();
+  if(!oilRestore()){ oilAddForm(); }
+  if(!tollRestore()){ tollAddForm(); }
+
+  // save เมื่อเปลี่ยนเดือน
+  document.getElementById('oil-month')?.addEventListener('input', oilSave);
+  document.getElementById('toll-month')?.addEventListener('input', tollSave);
+
+  // อัปเดต save bar ทุกครั้งที่ save
+  const _origSave = s1Save;
+  s1Save = function(){
+    _origSave();
+    const bar = document.getElementById('s1-save-bar');
+    const msg = document.getElementById('s1-save-msg');
+    bar.style.display = 'flex';
+    msg.textContent = saveMsgText();
+  };
+
+  // save header fields เมื่อมีการแก้ไข
+  ['s1-date','s1-name','s1-dept'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input', s1Save);
+  });
+
+  if(!cfg.name) setTimeout(openSettings, 600);
+
+  // inject logo into s1 header
+  const s1LogoImg = document.getElementById('s1-logo-img');
+  if(s1LogoImg){ s1LogoImg.src = LOGO_B64; s1LogoImg.style.cssText += ''; }
+  ['oil-logo-img','toll-logo-img'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.src = LOGO_B64;
+  });
+})();
+</script>
+</body>
+</html>
