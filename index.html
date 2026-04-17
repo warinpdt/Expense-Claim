@@ -173,10 +173,12 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
   #page-1.print-active{page:rc-page}
   #page-2.print-active{page:no-pagenum}
   #page-3.print-active{page:no-pagenum}
+  #page-4.print-active{page:no-pagenum}
   body{background:#fff;font-size:10pt;line-height:1.4;color:#000}
   .topbar,.tabs-bar,.btn-add,.btn-del,.no-print,.overlay,.alert{display:none!important}
   .page{display:none!important}
   .page.print-active{display:block!important}
+  .page.print-active + .page.print-active{break-before:page;page-break-before:always}
   .container{padding:0;max-width:100%}
 
   .card{box-shadow:none;border-radius:0;border:none;margin-bottom:6px}
@@ -225,6 +227,7 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
   .sig-line{height:28px;margin-bottom:5px;border-bottom:1px solid #999}
   .sig-lbl,.sig-date{font-size:9pt}
   .note-bar{background:transparent;break-inside:avoid;font-size:8.5pt;padding:5px 2px;margin-top:6px}
+  [contenteditable]{border-bottom:none!important;outline:none!important}
   /* RC แต่ละฉบับแยกหน้า */
   #rc-container > div + div { break-before: page; }
   /* oil แต่ละใบแยกหน้า */
@@ -292,6 +295,85 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
 </style>
 </head>
 <body>
+<!-- ═══ ONBOARDING MODAL ═══ -->
+<div id="onboard-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:700;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.3)">
+    <!-- Header -->
+    <div style="background:#00205b;padding:18px 24px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="color:#FFD187;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">ยินดีต้อนรับ</div>
+        <div style="color:#fff;font-size:17px;font-weight:700">ขั้นตอนการใช้งาน</div>
+      </div>
+      <button onclick="closeOnboard()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:22px 24px">
+      <!-- Step 0 -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#00205b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">0</div>
+        <div style="flex:1;background:#eef1fb;border-left:4px solid #0032a0;border-radius:0 8px 8px 0;padding:10px 14px">
+          <div style="font-size:13px;font-weight:700;color:#00205b;margin-bottom:2px">ครั้งแรก — ตั้งค่าผู้ใช้</div>
+          <div style="font-size:12.5px;color:#374151">กดปุ่ม ⚙ <b>ตั้งค่าผู้ใช้</b> มุมขวาบน → กรอกชื่อ เลขบัตร ที่อยู่ ตำแหน่ง <b>ครั้งเดียว</b></div>
+        </div>
+      </div>
+      <!-- Cases -->
+      <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Flow การเบิกแต่ละเดือน</div>
+      <!-- Case 1 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid #e2e8f0">
+        <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:10px">เคสที่ 1 — ค่าใช้จ่ายทั่วไป (มีใบเสร็จ)</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="text-align:center;padding:8px 12px;background:#fff;border-radius:7px;border:1px solid #a8abdf;min-width:90px"><div style="font-size:16px">🧾</div><div style="font-size:11px;font-weight:700;color:#00205b">ได้ใบเสร็จ</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#eef1fb;border-radius:7px;border:1px solid #a8abdf;min-width:90px"><div style="font-size:16px">①</div><div style="font-size:11px;font-weight:700;color:#00205b">ลงใบสรุป</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#fff;border-radius:7px;border:1px solid #e2e8f0;min-width:90px"><div style="font-size:16px">🖨️</div><div style="font-size:11px;font-weight:700;color:#00205b">พิมพ์ส่ง</div></div>
+        </div>
+      </div>
+      <!-- Case 2 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid #e2e8f0">
+        <div style="font-size:12px;font-weight:700;color:#0032a0;margin-bottom:10px">เคสที่ 2 — ไม่มีใบเสร็จ (Grab, เดินทาง ฯลฯ)</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="text-align:center;padding:8px 12px;background:#fff;border-radius:7px;border:1px solid #a8abdf;min-width:90px"><div style="font-size:16px">🚗</div><div style="font-size:11px;font-weight:700;color:#00205b">ไม่มีใบเสร็จ</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#eef1fb;border-radius:7px;border:1px solid #a8abdf;min-width:90px"><div style="font-size:16px">①</div><div style="font-size:11px;font-weight:700;color:#00205b">ลงใบสรุป</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#eef1fb;border-radius:7px;border:1px solid #a8abdf;min-width:90px"><div style="font-size:16px">②</div><div style="font-size:11px;font-weight:700;color:#00205b">กด สร้าง RC</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#fff;border-radius:7px;border:1px solid #e2e8f0;min-width:90px"><div style="font-size:16px">🖨️</div><div style="font-size:11px;font-weight:700;color:#00205b">พิมพ์ส่ง</div></div>
+        </div>
+      </div>
+      <!-- Case 3 -->
+      <div style="background:#f8f9fb;border-radius:10px;padding:14px 16px;margin-bottom:18px;border:1px solid #e2e8f0">
+        <div style="font-size:12px;font-weight:700;color:#704C91;margin-bottom:10px">เคสที่ 3 — ค่าน้ำมัน / ทางด่วน</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="text-align:center;padding:8px 12px;background:#F5EEF9;border-radius:7px;border:1px solid #C4A3D4;min-width:100px"><div style="font-size:16px">③/④</div><div style="font-size:11px;font-weight:700;color:#52336B">กรอกใบคุม</div></div>
+          <div style="color:#704C91;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#F5EEF9;border-radius:7px;border:1px solid #C4A3D4;min-width:120px"><div style="font-size:16px">↑</div><div style="font-size:11px;font-weight:700;color:#52336B">ส่งยอดไป Tab ①</div></div>
+          <div style="color:#0032a0;font-weight:700">→</div>
+          <div style="text-align:center;padding:8px 12px;background:#fff;border-radius:7px;border:1px solid #e2e8f0;min-width:90px"><div style="font-size:16px">🖨️</div><div style="font-size:11px;font-weight:700;color:#00205b">พิมพ์ส่ง</div></div>
+        </div>
+      </div>
+      <!-- Tips -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px"><div style="font-size:11.5px;font-weight:700;color:#92400e;margin-bottom:3px">⏱ กำหนดส่ง</div><div style="font-size:11.5px;color:#374151">ย้อนหลังได้ <b>ไม่เกิน 1 เดือน</b></div></div>
+        <div style="background:#e6f4f2;border:1px solid #a7d9d5;border-radius:8px;padding:10px 12px"><div style="font-size:11.5px;font-weight:700;color:#0e7a6e;margin-bottom:3px">💾 Auto-save</div><div style="font-size:11.5px;color:#374151">Refresh แล้ว <b>ข้อมูลยังอยู่</b></div></div>
+        <div style="background:#f0f4fa;border:1px solid #d4dff0;border-radius:8px;padding:10px 12px"><div style="font-size:11.5px;font-weight:700;color:#0032a0;margin-bottom:3px">🖨 พิมพ์</div><div style="font-size:11.5px;color:#374151">เลือก Tab → กด <b>พิมพ์หน้านี้</b></div></div>
+      </div>
+      <!-- Footer buttons -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6b7280;cursor:pointer">
+          <input type="checkbox" id="onboard-no-show" style="accent-color:#0032a0;width:14px;height:14px">
+          ไม่ต้องแสดงอีก
+        </label>
+        <button onclick="closeOnboard()" style="background:#0032a0;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">
+          เข้าใจแล้ว — เริ่มใช้งาน
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
 <!-- ═══ PRINT TIP MODAL ═══ -->
 <div id="print-tip" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center">
@@ -331,11 +413,50 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
       </div>
       <div style="display:flex;gap:10px">
         <button onclick="cancelPrint()" style="flex:1;background:none;border:1.5px solid var(--gray-200);color:var(--gray-700);padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer">ยกเลิก</button>
-        <button onclick="confirmPrint(document.getElementById('tip-no-show').checked)" style="flex:2;background:var(--gold);color:#fff;border:none;padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">เข้าใจแล้ว — พิมพ์เลย</button>
+        <button onclick="confirmPrint(document.getElementById('tip-no-show').checked)" style="flex:2;background:#FFD187;color:#3d3d3a;border:none;padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">เข้าใจแล้ว — พิมพ์เลย</button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ═══ BATCH PRINT MODAL ═══ -->
+<div id="batch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+    <div style="background:var(--navy);color:#fff;padding:14px 20px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Batch Print — เลือก Tab ที่ต้องการพิมพ์
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:14px">เลือกหน้าที่ต้องการพิมพ์พร้อมกันในชุดเดียว</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;transition:border .15s" id="bl-0">
+          <input type="checkbox" id="bp-0" checked style="width:16px;height:16px;accent-color:#0032a0;cursor:pointer" onchange="bpStyle(0)">
+          <span style="font-size:14px;font-weight:600;color:var(--navy)">① ใบสรุปค่าใช้จ่าย</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer;transition:border .15s" id="bl-1">
+          <input type="checkbox" id="bp-1" style="width:16px;height:16px;accent-color:#0032a0;cursor:pointer" onchange="bpStyle(1)">
+          <span style="font-size:14px;font-weight:600;color:var(--navy)">② ใบรับรองแทน RC</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #C4A3D4;border-radius:8px;cursor:pointer;transition:border .15s" id="bl-2">
+          <input type="checkbox" id="bp-2" style="width:16px;height:16px;accent-color:#704C91;cursor:pointer" onchange="bpStyle(2)">
+          <span style="font-size:14px;font-weight:600;color:#52336B">③ ใบคุมเงินสดย่อย (มี VAT)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #a7d9d5;border-radius:8px;cursor:pointer;transition:border .15s" id="bl-3">
+          <input type="checkbox" id="bp-3" style="width:16px;height:16px;accent-color:#0e7a6e;cursor:pointer" onchange="bpStyle(3)">
+          <span style="font-size:14px;font-weight:600;color:#09564d">④ ใบคุมเงินสดย่อย</span>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeBatchModal()" style="flex:1;background:none;border:1.5px solid var(--gray-200);color:var(--gray-700);padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer">ยกเลิก</button>
+        <button onclick="doBatchPrint()" style="flex:2;background:#FFD187;color:#3d3d3a;border:none;padding:10px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          พิมพ์ที่เลือก
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeSettings()">
@@ -377,7 +498,11 @@ table.guide{width:100%;border-collapse:collapse;font-size:13px}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       ตั้งค่าผู้ใช้
     </button>
-    <button class="btn-print" onclick="doPrint()">
+    <button onclick="openBatchModal()" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.22)'" onmouseout="this.style.background='rgba(255,255,255,.12)'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Batch
+        </button>
+        <button class="btn-print" onclick="doPrint()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       พิมพ์หน้านี้
     </button>
@@ -779,6 +904,13 @@ function applyConfig(force){
     dp.value = parts.join(' / ');
   }
 }
+function closeOnboard(){
+  if(document.getElementById('onboard-no-show')?.checked){
+    localStorage.setItem('p4_onboard_seen','1');
+  }
+  document.getElementById('onboard-modal').style.display = 'none';
+}
+
 function openSettings(){
   const saved = localStorage.getItem('p4_expense_cfg');
   const c = saved ? JSON.parse(saved) : {...DEFAULT_CONFIG};
@@ -938,12 +1070,17 @@ window.addEventListener('load', ()=>{
   }, 500);
 });
 window.addEventListener('beforeprint', ()=>{
-  // clear any lingering inline backgrounds on table rows
+  // clear any lingering inline backgrounds
   document.querySelectorAll('.et tbody tr, .et tbody td').forEach(el=>{ el.style.background=''; el.style.transition=''; });
-  // ถ้ายังไม่มี print-active (กด Ctrl+P ตรงๆ) ให้ใช้ active แทน
-  let pg = document.querySelector('.page.print-active');
-  if(!pg){ pg = document.querySelector('.page.active'); if(pg) pg.classList.add('print-active'); }
-  if(pg && !pg._bpSwapped) pg._bpSwapped = flattenForPrint(pg);
+  // ถ้ายังไม่มี print-active (Ctrl+P) ให้ใช้ active แทน
+  const actives = document.querySelectorAll('.page.print-active');
+  if(!actives.length){
+    const pg = document.querySelector('.page.active'); if(pg) pg.classList.add('print-active');
+  }
+  // flatten ALL print-active pages
+  document.querySelectorAll('.page.print-active').forEach(pg=>{
+    if(!pg._bpSwapped) pg._bpSwapped = flattenForPrint(pg);
+  });
 });
 window.addEventListener('afterprint', ()=>{
   document.querySelectorAll('.page.print-active').forEach(pg=>{
@@ -1336,7 +1473,8 @@ function rcAddForm(prefill){
   prefill = prefill || {};
   rcCount++;
   const num = rcCount;
-  const label = prefill.rowNum ? `รายการที่ ${prefill.rowNum}` : `รายการที่ ${num}`;
+  const rawNum = (prefill.rowNum||'').replace(/^รายการที่\s*/,'');
+  const label = rawNum ? `รายการที่ ${rawNum}` : `รายการที่ ${num}`;
   const div = document.createElement('div');
   div.id = 'rc-form-'+num;
   div.innerHTML = `
@@ -1568,7 +1706,7 @@ function oilAddForm(prefill, prefillMonth, sourceRowNum, prefillCat){
           <div style="width:1px;height:40px;background:#dde1ea"></div>
           <div>
             <div style="font-size:17px;font-weight:700;color:#00205b;line-height:1.2">ใบคุมเงินสดย่อย <span style="font-size:11px;font-weight:400;color:var(--gray-500)">(มี VAT)</span></div>
-            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="oil-label-${num}" style="color:#00205b;font-weight:600">${label}</span></div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="oil-label-${num}" contenteditable="true" spellcheck="false" title="คลิกเพื่อแก้ไข เช่น รายการที่ 5" style="color:#00205b;font-weight:600;cursor:text;border-bottom:1px dashed #a8abdf;outline:none;min-width:40px;display:inline-block;padding:0 2px" oninput="oilSave()" onblur="oilSave()">${label}</span></div>
           </div>
         </div>
         <button class="no-print" onclick="if(confirm('ลบใบที่ ${num} ออก?')) oilRemoveForm(${num})"
@@ -1871,7 +2009,7 @@ function tollAddForm(prefill, prefillMonth, sourceRowNum, prefillCat){
           <div style="width:1px;height:40px;background:rgba(255,255,255,.25)"></div>
           <div>
             <div style="font-size:17px;font-weight:700;color:#00205b;line-height:1.2">ใบคุมเงินสดย่อย</div>
-            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="toll-label-${num}" style="color:#00205b;font-weight:600">${label}</span></div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:3px">บริษัท พีโฟร์ดิจิตอล กรุ๊ป จำกัด &nbsp;·&nbsp; <span id="toll-label-${num}" contenteditable="true" spellcheck="false" title="คลิกเพื่อแก้ไข เช่น รายการที่ 5" style="color:#00205b;font-weight:600;cursor:text;border-bottom:1px dashed #a7d9d5;outline:none;min-width:40px;display:inline-block;padding:0 2px" oninput="tollSave()" onblur="tollSave()">${label}</span></div>
           </div>
         </div>
         <button class="no-print" onclick="if(confirm('ลบใบที่ ${num} ออก?')) tollRemoveForm(${num})"
@@ -2087,6 +2225,11 @@ function pushOilToSummary(num){
   s1AddRow('', desc, cat, fmt2(totalVal), 'vat', 'ดูรายละเอียดเพิ่มที่ใบคุมเงินสดย่อย');
   s1Calc(); s1Save();
 
+  // อัปเดต label ของใบคุม → รายการที่ X ตามลำดับใบสรุป
+  const newRowNum = document.querySelectorAll('#s1-body tr').length;
+  const oilLbl = document.getElementById('oil-label-'+num);
+  if(oilLbl){ oilLbl.textContent = 'รายการที่ ' + newRowNum; oilSave(); }
+
   // เปลี่ยนปุ่มเป็น "ส่งแล้ว"
   const btn = document.getElementById('oil-push-btn-'+num);
   if(btn){
@@ -2120,6 +2263,12 @@ function pushTollToSummary(num){
   const desc = 'รวม' + cat + ' เดือน ' + monthLabel;
   s1AddRow('', desc, cat, fmt2(totalVal), 'novat', 'ดูรายละเอียดเพิ่มที่ใบคุมเงินสดย่อย');
   s1Calc(); s1Save();
+
+  // อัปเดต label ของใบคุม → รายการที่ X ตามลำดับใบสรุป
+  const newRowNumT = document.querySelectorAll('#s1-body tr').length;
+  const tollLbl = document.getElementById('toll-label-'+num);
+  if(tollLbl){ tollLbl.textContent = 'รายการที่ ' + newRowNumT; tollSave(); }
+
   const btn = document.getElementById('toll-push-btn-'+num);
   if(btn){
     btn.style.background = '#704C91';
@@ -2158,7 +2307,7 @@ function rcSave(){
     });
     forms.push({
       num,
-      rowNum : div.querySelector('.card > div > div:nth-child(2)')?.textContent?.split('|')?.[1]?.trim() || '',
+      rowNum : (div.querySelector('.card > div > div:nth-child(2)')?.textContent?.split('|')?.[1]?.trim()||'').replace(/^รายการที่\s*/,''),
       name   : div.querySelector('.rc-name')?.value || '',
       pid    : div.querySelector('.rc-pid')?.value  || '',
       addr   : div.querySelector('.rc-addr')?.value || '',
@@ -2209,6 +2358,47 @@ function rcRestore(){
     }, 400);
     return true;
   }catch(e){ return false; }
+}
+
+
+/* ─────────────────────────────────────
+   BATCH PRINT
+───────────────────────────────────── */
+const BP_COLORS = {
+  0: '#0032a0', 1: '#0032a0', 2: '#704C91', 3: '#0e7a6e'
+};
+function bpStyle(n){
+  const cb = document.getElementById('bp-'+n);
+  const lbl = document.getElementById('bl-'+n);
+  const colors = ['#0032a0','#0032a0','#C4A3D4','#a7d9d5'];
+  lbl.style.borderColor = cb.checked ? (BP_COLORS[n]||'#0032a0') : colors[n]||'var(--gray-200)';
+  lbl.style.background  = cb.checked ? (n===2?'#F5EEF9':n===3?'#e6f4f2':'#eef1fb') : '';
+}
+function openBatchModal(){
+  // pre-check current tab
+  [0,1,2,3].forEach(n=>{
+    const cb = document.getElementById('bp-'+n);
+    if(cb){ cb.checked = (n === activeTab); bpStyle(n); }
+  });
+  document.getElementById('batch-modal').style.display='flex';
+}
+function closeBatchModal(){
+  document.getElementById('batch-modal').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
+}
+function doBatchPrint(){
+  const tabMap = {0:0, 1:1, 2:2, 3:3};
+  const selected = [0,1,2,3].filter(n=>document.getElementById('bp-'+n)?.checked);
+  if(selected.length === 0){ alert('กรุณาเลือกอย่างน้อย 1 Tab'); return; }
+  document.getElementById('batch-modal').style.display='none';
+  // mark selected pages as print-active
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
+  selected.forEach(n=>document.getElementById('page-'+n)?.classList.add('print-active'));
+  if(!localStorage.getItem('p4_print_tip_seen')){
+    document.getElementById('print-tip').style.display='flex';
+  } else {
+    window.print();
+  }
 }
 
 /* ─────────────────────────────────────
@@ -2267,6 +2457,10 @@ function rcRestore(){
     document.getElementById(id)?.addEventListener('input', s1Save);
   });
 
+  // Show onboarding on first visit
+  if(!localStorage.getItem('p4_onboard_seen')){
+    document.getElementById('onboard-modal').style.display = 'flex';
+  }
   if(!cfg.name) setTimeout(openSettings, 600);
 
   // inject logo into s1 header
